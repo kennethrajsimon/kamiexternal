@@ -1,5 +1,4 @@
-import _imgRectangle1540 from "../assets/1e2c0b75f3380f734d584408cd01b575701ebed4.png";
-const imgRectangle1540 = (_imgRectangle1540 as any).src || _imgRectangle1540;
+const imgRectangle1540 = "/assets/1e2c0b75f3380f734d584408cd01b575701ebed4.png";
 
 export default function Frame() {
   return (

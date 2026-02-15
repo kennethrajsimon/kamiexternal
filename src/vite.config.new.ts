@@ -7,6 +7,7 @@ const ngrokHost = process.env.NGROK_HOST;
 export default defineConfig({
   plugins: [react()],
   root: path.resolve(__dirname, '..'),
+  cacheDir: path.resolve(__dirname, '.vite-cache'),
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
@@ -87,6 +88,14 @@ export default defineConfig({
       : {}),
     proxy: {
       '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      },
+      '/uploads': {
         target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,

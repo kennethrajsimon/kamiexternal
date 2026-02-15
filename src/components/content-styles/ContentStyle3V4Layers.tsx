@@ -148,7 +148,7 @@ export function ContentStyle3ImageLayer({
               <div 
                 className="absolute"
                 style={{
-                  left: showBothImages ? '80px' : 'calc(50% + 16px)',
+                  left: '772px',
                   top: showBothImages ? '261px' : '80px',
                   width: showBothImages ? '322.5px' : '660px',
                   height: showBothImages ? '428.147px' : '691px',
@@ -181,10 +181,10 @@ export function ContentStyle3ImageLayer({
               <div 
                 className="absolute"
                 style={{
-                  left: 'calc(50% + 16px)',
-                  top: '80px',
-                  width: '660px',
-                  height: '691px',
+                  left: showBothImages ? '1109.5px' : 'calc(50% + 16px)',
+                  top: showBothImages ? '283px' : '80px',
+                  width: showBothImages ? '322.5px' : '660px',
+                  height: showBothImages ? '428.147px' : '691px',
                   opacity: img2Opacity,
                   transform: `translateY(${img2Y}px) scale(${img2Scale}) rotate(${img2Rotate}deg)`,
                   transition: 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -912,6 +912,8 @@ export function ContentStyle3TextLayer({
               {paragraphHeaders?.map((header, index) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
                 const isFirstHeader = index === 0;
+                const showHeader = !!header.text;
+                const showBody = !!bodyCopy?.text;
                 
                 // Apply animations to ALL headers, not just the first one
                 const itemOpacity = header1Opacity;
@@ -930,25 +932,27 @@ export function ContentStyle3TextLayer({
                       transition: itemTransition
                     }}
                   >
-                    {header.text && (
+                    {(showHeader || showBody) && (
                       <>
                         <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
-                          <p 
-                            className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]"
-                            style={{
-                              opacity: headerTextOpacity,
-                              transform: `translateY(${headerTextY}px) scale(${headerTextScale})`,
-                              filter: `blur(${headerTextBlur}px)`,
-                              transition: 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1)'
-                            }}
-                          >
-                            {header.text}
-                          </p>
-                        </div>
-                        {bodyCopy?.text && (
+                        {showHeader && (
+                          <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
+                            <p 
+                              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]"
+                              style={{
+                                opacity: headerTextOpacity,
+                                transform: `translateY(${headerTextY}px) scale(${headerTextScale})`,
+                                filter: `blur(${headerTextBlur}px)`,
+                                transition: 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1)'
+                              }}
+                            >
+                              {header.text}
+                            </p>
+                          </div>
+                        )}
+                        {showBody && (
                           <>
-                            <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: '4px' }}>
+                            <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: showHeader ? '4px' : undefined }}>
                           <div 
                             className="mb-0 text-[15px] rich-preview-content"
                                 style={{

@@ -1,6 +1,5 @@
 import svgPaths from "./svg-422nfspwoc";
-import _imgRectangle1540 from "../assets/34c2e0eace15e343a1c923bac054f892ff3c7f6f.png";
-const imgRectangle1540 = (_imgRectangle1540 as any).src || _imgRectangle1540;
+import imgRectangle1540 from "../../assets/34c2e0eace15e343a1c923bac054f892ff3c7f6f.png";
 import { MediaDisplay } from "../components/MediaDisplay";
 import { useRef, useEffect, useState } from 'react';
 
@@ -26,11 +25,11 @@ function Frame({ coverImage, imageFit }: { coverImage?: string | null, imageFit?
   return (
     <div className="-translate-x-1/2 absolute bottom-[0.32px] h-[750.677px] left-[calc(50%-0.5px)] w-[717px]">
       <div className="absolute h-[750.677px] left-[-4.35px] top-0 w-[721.345px]">
-        <MediaDisplay 
-          src={coverImage || imgRectangle1540} 
-          alt="" 
-          className="absolute inset-0 max-w-none pointer-events-none size-full" 
-          objectFit={imageFit || 'contain'} 
+        <MediaDisplay
+          src={coverImage || (imgRectangle1540 as any)}
+          alt=""
+          className="absolute inset-0 max-w-none pointer-events-none size-full"
+          objectFit={imageFit || 'contain'}
         />
       </div>
     </div>
@@ -39,14 +38,14 @@ function Frame({ coverImage, imageFit }: { coverImage?: string | null, imageFit?
 
 export default function CoverThumbnailFeatureArticleBw({ category, title, coverImage, imageFit, backgroundColor, backgroundImage, backgroundImageFit, backgroundText, backgroundTextColor, backgroundTextStyle, iconCount1, iconCount2, showHeroImage, showBackgroundText, showBackgroundColor }: CoverThumbnailFeatureArticleBwProps) {
   const defaultColor = backgroundTextColor || '#f1f0eb';
-  const textStyle = backgroundTextStyle === 'fill' 
+  const textStyle = backgroundTextStyle === 'fill'
     ? { color: defaultColor }
-    : { 
-        WebkitTextStroke: `2px ${defaultColor}`,
-        WebkitTextFillColor: 'transparent',
-        color: 'transparent'
-      };
-  
+    : {
+      WebkitTextStroke: `2px ${defaultColor}`,
+      WebkitTextFillColor: 'transparent',
+      color: 'transparent'
+    };
+
   const textRef = useRef<HTMLParagraphElement>(null);
   const [fontSize, setFontSize] = useState(815);
   const [hoveredIcon, setHoveredIcon] = useState<'heart' | 'plane' | null>(null);
@@ -54,7 +53,7 @@ export default function CoverThumbnailFeatureArticleBw({ category, title, coverI
   const heartCount = iconCount1 || '112';
   const planeCount = iconCount2 || '23';
   const maxWidth = 1351;
-  
+
   useEffect(() => {
     const measure = () => {
       if (!textRef.current || !backgroundText) return;
@@ -98,29 +97,29 @@ export default function CoverThumbnailFeatureArticleBw({ category, title, coverI
       clearTimeout(t);
     };
   }, [backgroundText]);
-  
+
   return (
     <div className="relative" style={{ width: '1512px', height: '851px', backgroundColor: (showBackgroundColor !== false) ? (backgroundColor || '#1a1a1a') : '#1a1a1a' }} data-name="Cover Thumbnail – Feature Article BW">
       {backgroundImage && (
         <div className="absolute h-[851px] left-0 top-0 w-[1512px] overflow-hidden">
-          <MediaDisplay 
-            src={backgroundImage} 
-            alt="" 
-            className="absolute inset-0 w-full h-full" 
-            objectFit={backgroundImageFit || 'cover'} 
+          <MediaDisplay
+            src={backgroundImage}
+            alt=""
+            className="absolute inset-0 w-full h-full"
+            objectFit={backgroundImageFit || 'cover'}
           />
         </div>
       )}
       {(showBackgroundText !== false) && (
-        <div 
-          className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col h-[750px] justify-center left-[763.5px] not-italic text-center top-[calc(50%-0.5px)] w-[1351px]" 
+        <div
+          className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col h-[750px] justify-center left-[763.5px] not-italic text-center top-[calc(50%-0.5px)] w-[1351px]"
           style={{ lineHeight: '0', overflow: 'hidden', fontFamily: `'Humane 2.0', sans-serif` }}
         >
-          <p 
+          <p
             ref={textRef}
-            className="leading-[normal] whitespace-nowrap" 
+            className="leading-[normal] whitespace-nowrap"
             style={{ ...textStyle, fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: backgroundText || 'BUTTERFLY' }} 
+            dangerouslySetInnerHTML={{ __html: backgroundText || 'BUTTERFLY' }}
           />
         </div>
       )}

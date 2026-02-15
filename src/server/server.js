@@ -72,10 +72,8 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  // Construct full URL
-  const protocol = req.protocol;
-  const host = req.get('host');
-  const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+  // Return relative URL
+  const fileUrl = `/uploads/${req.file.filename}`;
   res.json({ url: fileUrl });
 });
 
@@ -128,6 +126,35 @@ app.post('/api/saved-pages', (req, res) => {
   const payload = req.body || {};
   const now = new Date().toISOString();
   const id = payload.id || String(Date.now());
+
+  // Helper: collect all uploaded image URLs from a saved page record
+  const collectImageUrls = (record) => {
+    const urls = new Set();
+    const addUrl = (url) => {
+      if (url && typeof url === 'string' && url.includes('/uploads/')) urls.add(url);
+    };
+    addUrl(record.cover_image);
+    if (record.cover_data_json) {
+      try {
+        const cd = JSON.parse(record.cover_data_json);
+        addUrl(cd.heroImage); addUrl(cd.heroImage2); addUrl(cd.backgroundImage);
+      } catch (e) { }
+    }
+    if (record.pages_json) {
+      try {
+        const pages = JSON.parse(record.pages_json);
+        if (Array.isArray(pages)) pages.forEach(p => {
+          if (p.images) Object.values(p.images).forEach(v => addUrl(v));
+        });
+      } catch (e) { }
+    }
+    return urls;
+  };
+
+  // Collect old image URLs before updating
+  const existing = db.prepare('SELECT * FROM saved_pages WHERE id = ?').get(id);
+  const oldUrls = existing ? collectImageUrls(existing) : new Set();
+
   db.prepare(`
     INSERT INTO saved_pages (
       id, name, content_json, pages_json, styles_json, section_visibility_json, selected_style, current_page_index,
@@ -166,12 +193,105 @@ app.post('/api/saved-pages', (req, res) => {
     payload.hasFeaturedProducts ? 1 : 0,
     payload.hasRecommendedReading ? 1 : 0
   );
+
+  // Delete orphaned image files (old images no longer in the new payload)
+  if (oldUrls.size > 0) {
+    const updated = db.prepare('SELECT * FROM saved_pages WHERE id = ?').get(id);
+    const newUrls = updated ? collectImageUrls(updated) : new Set();
+    oldUrls.forEach(url => {
+      if (!newUrls.has(url)) {
+        const filename = url.split('/uploads/').pop();
+        if (filename) {
+          const filePath = path.join(uploadsDir, filename);
+          if (fs.existsSync(filePath)) {
+            try {
+              fs.unlinkSync(filePath);
+              console.log(`Cleaned up replaced image: ${filename}`);
+            } catch (err) {
+              console.error(`Failed to delete replaced image ${filename}:`, err);
+            }
+          }
+        }
+      }
+    });
+  }
+
   res.json({ ok: true, id });
 });
 
 app.delete('/api/saved-pages/:id', (req, res) => {
-  db.prepare(`DELETE FROM saved_pages WHERE id = ?`).run(req.params.id);
-  res.json({ ok: true });
+  try {
+    // Get the page data first to find associated images
+    const page = db.prepare('SELECT * FROM saved_pages WHERE id = ?').get(req.params.id);
+
+    if (page) {
+      const imagesToDelete = new Set();
+
+      // Helper to add image path to delete set
+      const addImage = (url) => {
+        if (!url || typeof url !== 'string') return;
+        // Check if it's an uploaded file (contains /uploads/)
+        if (url.includes('/uploads/')) {
+          const filename = url.split('/uploads/').pop();
+          if (filename) {
+            imagesToDelete.add(filename);
+          }
+        }
+      };
+
+      // 1. Check cover image
+      addImage(page.cover_image);
+
+      // 2. Check cover data
+      if (page.cover_data_json) {
+        try {
+          const coverData = JSON.parse(page.cover_data_json);
+          addImage(coverData.heroImage);
+          addImage(coverData.heroImage2);
+          addImage(coverData.backgroundImage);
+        } catch (e) {
+          console.error('Error parsing cover_data_json:', e);
+        }
+      }
+
+      // 3. Check pages content
+      if (page.pages_json) {
+        try {
+          const pages = JSON.parse(page.pages_json);
+          if (Array.isArray(pages)) {
+            pages.forEach(p => {
+              if (p.images) {
+                Object.values(p.images).forEach(imgUrl => addImage(imgUrl));
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error parsing pages_json:', e);
+        }
+      }
+
+      // Delete the files
+      console.log(`Deleting ${imagesToDelete.size} images for page ${req.params.id}`);
+      imagesToDelete.forEach(filename => {
+        const filePath = path.join(uploadsDir, filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filename}`);
+          } catch (err) {
+            console.error(`Failed to delete file ${filename}:`, err);
+          }
+        }
+      });
+    }
+
+    // Delete the database record
+    db.prepare(`DELETE FROM saved_pages WHERE id = ?`).run(req.params.id);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error deleting page:', error);
+    res.status(500).json({ error: 'Failed to delete page' });
+  }
 });
 
 const port = process.env.PORT || 3001;

@@ -1,7 +1,6 @@
-import svgPaths from "./svg-r3j943l7ua";
+import svgPaths from "./svg-n197fo8afp";
 
-import _imgRectangle1540 from "../assets/36a8297e1a2ddc90473646931c66462380d62ee9.png";
-const imgRectangle1540 = (_imgRectangle1540 as any).src || _imgRectangle1540;
+
 import { MediaDisplay } from "../components/MediaDisplay";
 
 import { useState } from 'react';
@@ -23,8 +22,8 @@ interface CoverThumbnailAnnouncement1Props {
 
 function Heart({ isHovered, onMouseEnter, onMouseLeave }: { isHovered?: boolean, onMouseEnter?: () => void, onMouseLeave?: () => void }) {
   return (
-    <div 
-      className="absolute left-[85px] size-[30px] top-[761px] cursor-pointer transition-transform z-20" 
+    <div
+      className="absolute left-[85px] size-[30px] top-[761px] cursor-pointer transition-transform z-20"
       data-name="heart"
       style={{ transform: isHovered ? 'scale(1.15)' : 'scale(1)' }}
       onMouseEnter={onMouseEnter}
@@ -41,8 +40,8 @@ function Heart({ isHovered, onMouseEnter, onMouseLeave }: { isHovered?: boolean,
 
 function Send({ isHovered, onMouseEnter, onMouseLeave }: { isHovered?: boolean, onMouseEnter?: () => void, onMouseLeave?: () => void }) {
   return (
-    <div 
-      className="absolute left-[132px] size-[30px] top-[761px] cursor-pointer transition-transform z-20" 
+    <div
+      className="absolute left-[132px] size-[30px] top-[761px] cursor-pointer transition-transform z-20"
       data-name="send-01"
       style={{ transform: isHovered ? 'scale(1.15)' : 'scale(1)' }}
       onMouseEnter={onMouseEnter}
@@ -65,16 +64,16 @@ export default function CoverThumbnailAnnouncement1({ category, title, coverImag
   const hasSingleImage = (hasImage1 && !hasImage2) || (!hasImage1 && hasImage2);
   const singleImageSrc = hasImage1 ? coverImage1 : coverImage2;
   const singleImageFit = hasImage1 ? imageFit1 : imageFit2;
-  
+
   return (
     <div className="bg-[#1a1a1a] relative size-full" data-name="Cover Thumbnail – Announcement 2" style={{ backgroundColor: (showBackgroundColor !== false) ? (backgroundColor || '#1a1a1a') : '#1a1a1a' }}>
       {backgroundImage && (
         <div className="absolute h-full left-0 top-0 w-full overflow-hidden z-0">
-          <MediaDisplay 
-            src={backgroundImage} 
-            alt="" 
-            className="absolute inset-0 w-full h-full" 
-            objectFit={backgroundImageFit || 'cover'} 
+          <MediaDisplay
+            src={backgroundImage}
+            alt=""
+            className="absolute inset-0 w-full h-full"
+            objectFit={backgroundImageFit || 'cover'}
           />
         </div>
       )}
@@ -104,11 +103,11 @@ export default function CoverThumbnailAnnouncement1({ category, title, coverImag
           {hasSingleImage ? (
             <div className="absolute left-1/2 size-[400px] top-[171px] -translate-x-1/2">
               {singleImageSrc ? (
-                <MediaDisplay 
-                  src={singleImageSrc} 
-                  alt="" 
-                  className="absolute inset-0 max-w-none pointer-events-none size-full" 
-                  objectFit={singleImageFit || 'cover'} 
+                <MediaDisplay
+                  src={singleImageSrc}
+                  alt=""
+                  className="absolute inset-0 max-w-none pointer-events-none size-full"
+                  objectFit={singleImageFit || 'cover'}
                 />
               ) : null}
             </div>
@@ -117,11 +116,11 @@ export default function CoverThumbnailAnnouncement1({ category, title, coverImag
               <div className="absolute contents left-[287px] top-[171px]">
                 <div className="absolute left-[287px] size-[400px] top-[171px]">
                   {coverImage1 ? (
-                    <MediaDisplay 
-                      src={coverImage1} 
-                      alt="" 
-                      className="absolute inset-0 max-w-none pointer-events-none size-full" 
-                      objectFit={imageFit1 || 'cover'} 
+                    <MediaDisplay
+                      src={coverImage1}
+                      alt=""
+                      className="absolute inset-0 max-w-none pointer-events-none size-full"
+                      objectFit={imageFit1 || 'cover'}
                     />
                   ) : null}
                 </div>
@@ -131,11 +130,11 @@ export default function CoverThumbnailAnnouncement1({ category, title, coverImag
                 <div className="absolute contents left-[calc(50%+143px)] top-[347px]">
                   {coverImage2 ? (
                     <div className="absolute left-[calc(50%+69px)] size-[400px] top-[171px]">
-                      <MediaDisplay 
-                        src={coverImage2} 
-                        alt="" 
-                        className="absolute inset-0 max-w-none pointer-events-none size-full" 
-                        objectFit={imageFit2 || 'cover'} 
+                      <MediaDisplay
+                        src={coverImage2}
+                        alt=""
+                        className="absolute inset-0 max-w-none pointer-events-none size-full"
+                        objectFit={imageFit2 || 'cover'}
                       />
                     </div>
                   ) : (

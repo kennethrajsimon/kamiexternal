@@ -98,88 +98,151 @@ export function ProductCarousel({ products: _products, onEdit }: ProductCarousel
           }
         }
 
-        .carousel-container {
-          perspective: 1000px;
-          transform-style: preserve-3d;
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          padding: 40px 0;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scroll-behavior: smooth;
-          -webkit-overflow-scrolling: touch;
+        @property --is-focused {
+          syntax: '<number>';
+          inherits: true;
+          initial-value: 0;
         }
 
-        .carousel-track {
-          display: flex;
-          align-items: center;
-          padding: 0 50vw; /* Center the first/last items */
+        .scroll-container {
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          perspective: 2000px;
+          perspective-origin: center;
+          -webkit-overflow-scrolling: touch;
+          padding-inline: calc(50vw - (var(--card-w) / 2));
+        }
+        
+        .scroll-container::-webkit-scrollbar {
+          display: none;
+        }
+
+        .card-wrapper {
+          flex: 0 0 var(--card-w);
+          scroll-snap-align: center;
+          scroll-snap-stop: always;
+          view-timeline: --item-visible inline;
         }
 
         .product-card {
-          width: var(--card-w);
-          height: calc(var(--card-w) * 1.4);
-          background: #2a2a2a;
-          border-radius: 12px;
-          border: 1px solid #3a3a3a;
-          flex-shrink: 0;
-          margin-right: calc(var(--overlap) * -1); /* Negative margin for overlap */
-          transition: transform 0.3s ease, margin 0.3s ease, z-index 0s;
-          position: relative;
-          cursor: pointer;
-          overflow: hidden;
-          box-shadow: -10px 0 20px rgba(0,0,0,0.5); /* Shadow on the left edge */
+          animation: flow linear both, center-detect linear both;
+          animation-timeline: --item-visible;
+          animation-range: cover 20% cover 80%;
+          transform-style: preserve-3d;
+          will-change: transform, filter, opacity;
+          transition: box-shadow 0.2s ease;
+        }
+        
+        @keyframes flow {
+          0% { 
+            transform: scale(0.8) rotateY(-45deg) translateX(var(--overlap)); 
+            opacity: 0.4;
+            filter: brightness(0.4) blur(1px);
+            z-index: 1;
+          }
+          40% { border-color: #F1F0EB; }
+          45%, 55% { 
+            transform: scale(1.15) rotateY(0deg) translateZ(var(--z-depth)) translateX(0); 
+            opacity: 1;
+            filter: brightness(1) blur(0px);
+            z-index: 100;
+            border-color: #F1F0EB;
+          }
+          60% { border-color: #F1F0EB; }
+          100% { 
+            transform: scale(0.8) rotateY(45deg) translateX(calc(var(--overlap) * -1)); 
+            opacity: 0.4;
+            filter: brightness(0.4) blur(1px);
+            z-index: 1;
+          }
         }
 
-        .product-card:hover {
-          transform: translateY(-20px) rotateY(-5deg);
-          margin-right: 20px; /* Expand gap on hover */
-          z-index: 100 !important;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        @keyframes center-detect {
+          0%, 44%, 56%, 100% { --is-focused: 0; }
+          45%, 55% { --is-focused: 1; }
         }
 
-        .product-card img {
-          width: 100%;
-          height: 70%;
-          object-fit: cover;
-          border-bottom: 1px solid #3a3a3a;
+        .is-pressed .product-card {
+          border-color: color-mix(in srgb, #11FF49 calc(var(--is-focused) * 100%), #F1F0EB) !important;
+          box-shadow: 0 0 calc(var(--is-focused) * 35px) rgba(17, 255, 73, 0.5), 0 20px 60px rgba(0,0,0,0.9);
+          transition: none !important;
         }
 
-        .product-info {
-          padding: 12px;
+        .product-label {
+          animation: label-flow linear both;
+          animation-timeline: --item-visible;
+          animation-range: contain 40% contain 60%;
         }
 
-        .product-name {
-          font-weight: 700;
-          font-size: 16px;
-          color: #f1f0eb;
+        @keyframes label-flow {
+          0% { opacity: 0; transform: translateY(10px); }
+          50% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(10px); }
         }
 
-        .product-creator {
-          font-size: 12px;
-          color: #9e9e9d;
-          margin-top: 4px;
+        .reflection {
+          mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+          -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
         }
-      ` }} />
+      `}} />
 
-      <div className="carousel-container">
-        <div className="carousel-track">
-          {products.map((product, index) => (
+      {/* Main Scroll Area - restored gap-2 for tightest overlap */}
+      <div className={`scroll-container flex items-center w-full h-[350px] sm:h-[650px] overflow-x-auto gap-2 ${isMouseDown ? 'is-pressed' : ''}`}>
+        {products.map((product) => (
+          <div key={product.id} className="card-wrapper flex items-center justify-center relative">
             <div 
-              key={product.id} 
-              className="product-card"
-              style={{ zIndex: index }}
+              className="product-card relative w-full aspect-square rounded-[3px] flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"
             >
-              <img src={product.image} alt={product.name} />
-              <div className="product-info">
-                <div className="product-name">{product.name}</div>
-                <div className="product-creator">{product.creator}</div>
+              {/* Product Image */}
+              <img 
+                src={product.image} 
+                alt={product.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+
+              {/* Product Info - Bottom Left */}
+              <div className="absolute left-[18px] right-[18px] z-10 pointer-events-none" style={{ bottom: '15px' }}>
+                {/* Product Name */}
+                <p 
+                  className="font-['Inter:Regular',sans-serif] font-normal leading-normal not-italic text-[#f1f0eb]"
+                  style={{ 
+                    fontSize: '20px',
+                    textTransform: 'uppercase',
+                    marginBottom: '0px'
+                  }}
+                >
+                  {product.name}
+                </p>
+                
+                {/* Creator Name */}
+                <p 
+                  className="font-['Inter:Regular',sans-serif] font-normal leading-normal not-italic text-[#f1f0eb]"
+                  style={{ 
+                    fontSize: '15px'
+                  }}
+                >
+                  {product.creator}
+                </p>
+              </div>
+
+              {/* Product Reflection */}
+              <div 
+                className="reflection absolute top-[105%] left-0 right-0 h-[40%] opacity-20 pointer-events-none scale-y-[-1]"
+              >
+                <img 
+                  src={product.image} 
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
+
+      {/* Ambient background glow */}
+      <div className={`absolute inset-0 pointer-events-none transition-opacity duration-150 ${isMouseDown ? 'opacity-100' : 'opacity-0'}`} 
+           style={{ background: 'radial-gradient(circle at center, rgba(17,255,73,0.08) 0%, transparent 70%)' }} />
     </div>
   );
 }

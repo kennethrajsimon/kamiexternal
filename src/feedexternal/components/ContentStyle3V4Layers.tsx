@@ -65,8 +65,9 @@ export function ContentStyle3ImageLayer({
   const efx = useEFX(); // Get EFX settings from context
   const isMobileOrTablet = useIsMobileOrTablet();
   
-  const img1Src = image1 || null;
-  const img2Src = image2 || null;
+  const normalize = (s?: string | null) => (s && typeof s === 'string' ? s.replace(/^\/src\/assets\//, '/assets/') : s || null);
+  const img1Src = normalize(image1);
+  const img2Src = normalize(image2);
   
   // Render any image that exists
   const hasImage1 = !!img1Src;
@@ -133,76 +134,72 @@ export function ContentStyle3ImageLayer({
 
   return (
     <>
-      {/* Desktop ONLY - Images in Image Layer with parallax */}
-      {!isMobileOrTablet && (
-        <>
-          {/* Image 1 - Male Designer (left) */}
-          {hasImage1 && (
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div 
-                className="absolute"
-                style={{
-                  left: showBothImages ? '80px' : 'calc(50% + 16px)',
-                  top: showBothImages ? '261px' : '80px',
-                  width: showBothImages ? '322.5px' : '660px',
-                  height: showBothImages ? '428.147px' : '691px',
-                  opacity: img1Opacity,
-                  transform: `translateY(${img1Y}px) scale(${img1Scale}) rotate(${img1Rotate}deg)`,
-                  filter: `blur(${img1Blur}px)`,
-                  transition: 'opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), filter 0.95s cubic-bezier(0.16, 1, 0.3, 1)',
-                  pointerEvents: 'none'
-                }}
-              >
-                <img 
-                  alt="" 
-                  className="absolute inset-0 max-w-none size-full rounded-[3px]" 
-                  style={{ objectFit: image1Fit }}
-                  src={img1Src} 
-                />
-              </div>
-            </EFXWrapper>
-          )}
+      {/* Images in Image Layer with parallax */}
+      {/* Image 1 - Male Designer (left) */}
+      {hasImage1 && (
+        <EFXWrapper
+          glitchEnabled={efx.glitchEnabled}
+          blurEnabled={efx.blurEnabled}
+          chromaticEnabled={efx.chromaticEnabled}
+          shakeEnabled={efx.shakeEnabled}
+          distortEnabled={efx.distortEnabled}
+        >
+          <div 
+            className="absolute"
+            style={{
+              left: isMobileOrTablet ? '50%' : '772px',
+              top: isMobileOrTablet ? '16px' : (showBothImages ? '261px' : '80px'),
+              width: isMobileOrTablet ? 'min(660px, 92vw)' : (showBothImages ? '322.5px' : '660px'),
+              height: showBothImages ? '428.147px' : '691px',
+              opacity: img1Opacity,
+              transform: `${isMobileOrTablet ? 'translateX(-50%) ' : ''}translateY(${img1Y}px) scale(${img1Scale}) rotate(${img1Rotate}deg)`,
+              filter: `blur(${img1Blur}px)`,
+              transition: 'opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), filter 0.95s cubic-bezier(0.16, 1, 0.3, 1)',
+              pointerEvents: 'none'
+            }}
+          >
+            <img 
+              alt="" 
+              className="absolute inset-0 max-w-none size-full rounded-[3px]" 
+              style={{ objectFit: image1Fit }}
+              src={img1Src} 
+            />
+          </div>
+        </EFXWrapper>
+      )}
 
-          {/* Image 2 - Female Designer (right) */}
-          {hasImage2 && (
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div 
-                className="absolute"
-                style={{
-                  left: 'calc(50% + 16px)',
-                  top: '80px',
-                  width: '660px',
-                  height: '691px',
-                  opacity: img2Opacity,
-                  transform: `translateY(${img2Y}px) scale(${img2Scale}) rotate(${img2Rotate}deg)`,
-                  transition: 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)',
-                  pointerEvents: 'none',
-                  overflow: 'hidden',
-                  borderRadius: '3px'
-                }}
-              >
-                <img 
-                  alt="" 
-                  className="absolute inset-0 max-w-none size-full rounded-[3px]" 
-                  style={{ objectFit: image2Fit }}
-                  src={img2Src} 
-                />
-              </div>
-            </EFXWrapper>
-          )}
-        </>
+      {/* Image 2 - Female Designer (right) */}
+      {hasImage2 && (
+        <EFXWrapper
+          glitchEnabled={efx.glitchEnabled}
+          blurEnabled={efx.blurEnabled}
+          chromaticEnabled={efx.chromaticEnabled}
+          shakeEnabled={efx.shakeEnabled}
+          distortEnabled={efx.distortEnabled}
+        >
+          <div 
+            className="absolute"
+            style={{
+              left: isMobileOrTablet ? '50%' : (showBothImages ? '1109.5px' : 'calc(50% + 16px)'),
+              top: isMobileOrTablet ? '16px' : (showBothImages ? '283px' : '80px'),
+              width: isMobileOrTablet ? 'min(660px, 92vw)' : (showBothImages ? '322.5px' : '660px'),
+              height: showBothImages ? '428.147px' : '691px',
+              opacity: img2Opacity,
+              transform: `${isMobileOrTablet ? 'translateX(-50%) ' : ''}translateY(${img2Y}px) scale(${img2Scale}) rotate(${img2Rotate}deg)`,
+              transition: 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)',
+              pointerEvents: 'none',
+              overflow: 'hidden',
+              borderRadius: '3px'
+            }}
+          >
+            <img 
+              alt="" 
+              className="absolute inset-0 max-w-none size-full rounded-[3px]" 
+              style={{ objectFit: image2Fit }}
+              src={img2Src} 
+            />
+          </div>
+        </EFXWrapper>
       )}
     </>
   );
@@ -250,8 +247,14 @@ export function ContentStyle3TextLayer({
     };
   }, []);
   
-  const img1Src = image1 || null;
-  const img2Src = image2 || null;
+  const normalize = (s?: string | null) => {
+    if (!s || typeof s !== 'string') return s || null;
+    let out = s.replace(/^\/src\/assets\//, '/assets/');
+    out = out.replace(/^https?:\/\/(?:localhost|127\.0\.0\.1):3001\//, '/');
+    return out;
+  };
+  const img1Src = normalize(image1);
+  const img2Src = normalize(image2);
   const hasImage1 = !!img1Src;
   const hasImage2 = !!img2Src;
   const showBothImages = hasImage1 && hasImage2;
@@ -912,6 +915,8 @@ export function ContentStyle3TextLayer({
               {paragraphHeaders?.map((header, index) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
                 const isFirstHeader = index === 0;
+                const showHeader = !!header.text;
+                const showBody = !!bodyCopy?.text;
                 
                 // Apply animations to ALL headers, not just the first one
                 const itemOpacity = header1Opacity;
@@ -930,25 +935,27 @@ export function ContentStyle3TextLayer({
                       transition: itemTransition
                     }}
                   >
-                    {header.text && (
+                    {(showHeader || showBody) && (
                       <>
                         <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
-                          <p 
-                            className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]"
-                            style={{
-                              opacity: headerTextOpacity,
-                              transform: `translateY(${headerTextY}px) scale(${headerTextScale})`,
-                              filter: `blur(${headerTextBlur}px)`,
-                              transition: 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1)'
-                            }}
-                          >
-                            {header.text}
-                          </p>
-                        </div>
-                        {bodyCopy?.text && (
+                        {showHeader && (
+                          <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
+                            <p 
+                              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]"
+                              style={{
+                                opacity: headerTextOpacity,
+                                transform: `translateY(${headerTextY}px) scale(${headerTextScale})`,
+                                filter: `blur(${headerTextBlur}px)`,
+                                transition: 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1)'
+                              }}
+                            >
+                              {header.text}
+                            </p>
+                          </div>
+                        )}
+                        {showBody && (
                           <>
-                            <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: '4px' }}>
+                            <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: showHeader ? '4px' : undefined }}>
                           <div 
                             className="mb-0 text-[15px] rich-preview-content"
                                 style={{
@@ -973,6 +980,15 @@ export function ContentStyle3TextLayer({
           </div>
         </>
       )}
+      <style>{`
+        .rich-preview-content p {
+          margin: 0 0 15px;
+        }
+        .rich-preview-content p:empty::before {
+          content: "\\00a0";
+          display: block;
+        }
+      `}</style>
     </>
   );
 }

@@ -1,6 +1,5 @@
 import svgPaths from "./svg-syooslib8a";
-import _imgRectangle1540 from "../assets/4ccdd68ed9d9b6d43906560f18dfab9e0653e953.png";
-const imgRectangle1540 = (_imgRectangle1540 as any).src || _imgRectangle1540;
+const imgRectangle1540 = "/assets/4ccdd68ed9d9b6d43906560f18dfab9e0653e953.png";
 
 function Frame3() {
   return (

@@ -132,45 +132,47 @@ export default function ContentStyle3V4({
         })}
       </div>
 
-      {/* Images Area - Right Side */}
-      <div className="absolute right-[80px] top-[138px] w-[600px] flex flex-col gap-[20px]">
-        {image1 && (
-          <div className="w-full h-[300px] relative overflow-hidden rounded-[4px]">
-             <EFXWrapper
-              glitchEnabled={!!efx?.glitch}
-              blurEnabled={!!efx?.blur}
-              chromaticEnabled={!!efx?.chromatic}
-              shakeEnabled={!!efx?.shake}
-              distortEnabled={!!efx?.distort}
-            >
+      {image1 && (
+        <div className="absolute left-[80px] top-[261px] w-[322.5px] h-[428.147px]" style={{ zIndex: 5 }}>
+          <EFXWrapper
+            glitchEnabled={!!efx?.glitch}
+            blurEnabled={!!efx?.blur}
+            chromaticEnabled={!!efx?.chromatic}
+            shakeEnabled={!!efx?.shake}
+            distortEnabled={!!efx?.distort}
+          >
+            <div className="relative w-full h-full">
               <img 
-                src={image1} 
                 alt="" 
-                className="w-full h-full"
+                className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
                 style={{ objectFit: image1Fit || 'cover' }}
+                src={image1} 
               />
-            </EFXWrapper>
-          </div>
-        )}
-        {image2 && (
-          <div className="w-full h-[300px] relative overflow-hidden rounded-[4px]">
-            <EFXWrapper
-              glitchEnabled={!!efx?.glitch}
-              blurEnabled={!!efx?.blur}
-              chromaticEnabled={!!efx?.chromatic}
-              shakeEnabled={!!efx?.shake}
-              distortEnabled={!!efx?.distort}
-            >
+            </div>
+          </EFXWrapper>
+        </div>
+      )}
+      
+      {image2 && (
+        <div className="absolute left-[calc(50%+16px)] top-[80px] w-[660px] h-[691px]" style={{ overflow: 'hidden', borderRadius: '3px', zIndex: 5 }}>
+          <EFXWrapper
+            glitchEnabled={!!efx?.glitch}
+            blurEnabled={!!efx?.blur}
+            chromaticEnabled={!!efx?.chromatic}
+            shakeEnabled={!!efx?.shake}
+            distortEnabled={!!efx?.distort}
+          >
+            <div className="relative w-full h-full">
               <img 
-                src={image2} 
                 alt="" 
-                className="w-full h-full"
+                className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
                 style={{ objectFit: image2Fit || 'cover' }}
+                src={image2} 
               />
-            </EFXWrapper>
-          </div>
-        )}
-      </div>
+            </div>
+          </EFXWrapper>
+        </div>
+      )}
     </>
   );
 }

@@ -100,32 +100,70 @@ export function RecommendedArticles() {
           <div className="relative">
             <div 
               ref={scrollRef}
-              className="flex gap-[12px] overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar"
+              className="flex gap-[12px] overflow-x-auto pb-[20px]" 
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none'
               }}
             >
               {ARTICLES.map((article) => (
-                <div 
+                <div
                   key={article.id}
-                  className="flex-shrink-0 snap-center"
+                  className="flex-shrink-0 group"
                   style={{ width: '179px' }}
                 >
+                  {/* Article Image */}
                   <div 
-                    className="w-full aspect-[4/3] mb-[12px] rounded-[4px] overflow-hidden border border-[#2a2a2a]"
-                    style={{ backgroundColor: '#0d0d0d' }}
+                    className="w-full rounded-[3px] overflow-hidden mb-[16px] relative bg-[#1a1a1a] border transition-all duration-500"
+                    style={{
+                      height: '179px',
+                      borderColor: '#2a2a2a'
+                    }}
                   >
-                    {article.icon}
+                    <div className="w-full h-full transition-transform duration-500 group-active:scale-110">
+                      {article.icon}
+                    </div>
+                    {/* Overlay on tap */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-active:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(17, 255, 73, 0.1)' }}
+                    >
+                      <span 
+                        className="text-[11px] font-semibold px-[16px] py-[8px] rounded-full"
+                        style={{ 
+                          backgroundColor: '#11ff49',
+                          color: '#1a1a1a'
+                        }}
+                      >
+                        Read
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-[4px]">
-                    <div className="flex items-center gap-[8px] text-[10px] font-bold tracking-wider">
-                      <span style={{ color: '#a79755' }}>{article.category}</span>
-                      <span style={{ color: '#4a4a4a' }}>•</span>
-                      <span style={{ color: '#6e6e6d' }}>{article.readTime}</span>
+
+                  {/* Article Info */}
+                  <div>
+                    <div className="flex items-center gap-[8px] mb-[8px]">
+                      <span 
+                        className="text-[9px] font-bold tracking-wider uppercase"
+                        style={{ color: '#a79755' }}
+                      >
+                        {article.category}
+                      </span>
+                      <span 
+                        className="text-[9px]"
+                        style={{ color: '#9e9e9d' }}
+                      >
+                        •
+                      </span>
+                      <span 
+                        className="text-[9px]"
+                        style={{ color: '#9e9e9d' }}
+                      >
+                        {article.readTime}
+                      </span>
                     </div>
                     <h3 
-                      className="text-[14px] font-bold leading-[1.3]"
+                      className="text-[14px] font-bold transition-colors"
                       style={{ color: '#f1f0eb' }}
                     >
                       {article.title}
@@ -134,82 +172,120 @@ export function RecommendedArticles() {
                 </div>
               ))}
             </div>
+
+            {/* Left Arrow */}
+            <button
+              onClick={() => scroll('left')}
+              className="absolute left-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+              style={{ 
+                backgroundColor: '#2a2a2a',
+                border: '1px solid #3a3a3a'
+              }}
+            >
+              <ChevronLeft size={16} color="#f1f0eb" />
+            </button>
+
+            {/* Right Arrow */}
+            <button
+              onClick={() => scroll('right')}
+              className="absolute right-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+              style={{ 
+                backgroundColor: '#2a2a2a',
+                border: '1px solid #3a3a3a'
+              }}
+            >
+              <ChevronRight size={16} color="#f1f0eb" />
+            </button>
+          </div>
+
+          {/* Back to Landing Button */}
+          <div className="mt-[40px] flex justify-center">
+            <button
+              className="px-[32px] py-[12px] rounded-[8px] text-[13px] font-semibold transition-all active:opacity-60"
+              style={{ 
+                backgroundColor: '#2a2a2a',
+                border: '1px solid #3a3a3a',
+                color: '#f1f0eb'
+              }}
+            >
+              Browse All
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // Desktop horizontal layout
+  // Desktop layout
   return (
-    <div 
-      className="relative w-full"
-      style={{ 
-        backgroundColor: '#1a1a1a',
-        paddingTop: '40px',
-        paddingBottom: '40px'
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '1512px',
-          margin: '0 auto',
-          paddingLeft: '60px',
-          paddingRight: '60px'
-        }}
-      >
-        <div className="flex items-center justify-between mb-[24px]">
-          <h2 
-            className="text-[20px] font-bold tracking-tight"
-            style={{ color: '#f1f0eb' }}
-          >
-            Recommended Reading
-          </h2>
-          <div className="flex gap-[8px]">
-            <button 
-              onClick={() => scroll('left')}
-              className="p-2 rounded-full hover:bg-[#2a2a2a] transition-colors"
-              style={{ color: '#9e9e9d' }}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button 
-              onClick={() => scroll('right')}
-              className="p-2 rounded-full hover:bg-[#2a2a2a] transition-colors"
-              style={{ color: '#9e9e9d' }}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-
+    <div className="w-full py-[60px] md:py-[80px] px-[20px] md:px-[40px]" style={{ backgroundColor: '#0d0d0d' }}>
+      {/* Articles Container */}
+      <div className="relative max-w-[1400px] mx-auto">
+        {/* Horizontal Scroll Container */}
         <div 
           ref={scrollRef}
-          className="flex gap-[24px] overflow-x-hidden scroll-smooth"
+          className="flex md:grid md:grid-cols-3 gap-[24px] md:gap-[32px] overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide pb-[20px]"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
         >
           {ARTICLES.map((article) => (
-            <div 
+            <div
               key={article.id}
-              className="flex-shrink-0 group cursor-pointer"
-              style={{ width: '350px' }}
+              className="flex-shrink-0 w-[280px] md:w-auto group cursor-pointer snap-start"
             >
+              {/* Article Image */}
               <div 
-                className="w-full aspect-[16/9] mb-[16px] rounded-[6px] overflow-hidden border border-[#2a2a2a] relative"
-                style={{ backgroundColor: '#0d0d0d' }}
+                className="w-full h-[280px] rounded-[3px] overflow-hidden mb-[20px] relative bg-[#1a1a1a] border transition-all duration-500"
+                style={{
+                  borderColor: '#2a2a2a'
+                }}
               >
-                <div className="w-full h-full transition-transform duration-500 group-hover:scale-105">
+                <div className="w-full h-full transition-transform duration-500 group-hover:scale-110">
                   {article.icon}
                 </div>
+                {/* Overlay on hover */}
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(17, 255, 73, 0.1)' }}
+                >
+                  <span 
+                    className="text-[14px] font-semibold px-[24px] py-[12px] rounded-full"
+                    style={{ 
+                      backgroundColor: '#11ff49',
+                      color: '#1a1a1a'
+                    }}
+                  >
+                    Read Article
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-[6px]">
-                <div className="flex items-center gap-[8px] text-[11px] font-bold tracking-wider">
-                  <span style={{ color: '#a79755' }}>{article.category}</span>
-                  <span style={{ color: '#4a4a4a' }}>•</span>
-                  <span style={{ color: '#6e6e6d' }}>{article.readTime}</span>
+
+              {/* Article Info */}
+              <div>
+                <div className="flex items-center gap-[12px] mb-[12px]">
+                  <span 
+                    className="text-[11px] font-bold tracking-wider uppercase"
+                    style={{ color: '#a79755' }}
+                  >
+                    {article.category}
+                  </span>
+                  <span 
+                    className="text-[11px]"
+                    style={{ color: '#9e9e9d' }}
+                  >
+                    •
+                  </span>
+                  <span 
+                    className="text-[11px]"
+                    style={{ color: '#9e9e9d' }}
+                  >
+                    {article.readTime}
+                  </span>
                 </div>
                 <h3 
-                  className="text-[18px] font-bold leading-[1.3] group-hover:text-[#11ff49] transition-colors"
+                  className="text-[22px] font-bold transition-colors group-hover:text-[#11ff49]"
                   style={{ color: '#f1f0eb' }}
                 >
                   {article.title}
@@ -218,7 +294,51 @@ export function RecommendedArticles() {
             </div>
           ))}
         </div>
+
+        {/* Navigation Arrows - Hidden on Mobile, Visible on Desktop */}
+        <button
+          onClick={() => scroll('left')}
+          className="hidden md:flex absolute left-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
+          style={{ 
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #3a3a3a'
+          }}
+        >
+          <ChevronLeft size={18} color="#f1f0eb" />
+        </button>
+
+        <button
+          onClick={() => scroll('right')}
+          className="hidden md:flex absolute right-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
+          style={{ 
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #3a3a3a'
+          }}
+        >
+          <ChevronRight size={18} color="#f1f0eb" />
+        </button>
       </div>
+
+      {/* Back to Landing Button */}
+      <div className="mt-[60px] flex justify-center">
+        <button
+          className="px-[40px] py-[16px] rounded-[8px] text-[16px] font-semibold transition-all hover:opacity-80"
+          style={{ 
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #3a3a3a',
+            color: '#f1f0eb'
+          }}
+        >
+          Browse All Articles
+        </button>
+      </div>
+
+      {/* Hide scrollbar */}
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }

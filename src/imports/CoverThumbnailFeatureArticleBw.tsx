@@ -42,7 +42,7 @@ export default function CoverThumbnailFeatureArticleBw({ category, title, coverI
   const textStyle = backgroundTextStyle === 'fill' 
     ? { color: defaultColor }
     : { 
-        WebkitTextStroke: `2px ${defaultColor}`,
+        WebkitTextStroke: `6px ${defaultColor}`,
         WebkitTextFillColor: 'transparent',
         color: 'transparent'
       };
@@ -54,6 +54,7 @@ export default function CoverThumbnailFeatureArticleBw({ category, title, coverI
   const heartCount = iconCount1 || '112';
   const planeCount = iconCount2 || '23';
   const maxWidth = 1351;
+  const maxHeight = 750;
   
   useEffect(() => {
     const measure = () => {
@@ -61,22 +62,22 @@ export default function CoverThumbnailFeatureArticleBw({ category, title, coverI
       let currentSize = 7000;
       textRef.current.style.whiteSpace = 'nowrap';
       textRef.current.style.fontSize = `${currentSize}px`;
-      while (textRef.current.scrollWidth > maxWidth && currentSize > 500) {
+      while ((textRef.current.scrollWidth > maxWidth || textRef.current.scrollHeight > maxHeight) && currentSize > 500) {
         currentSize -= 100;
         textRef.current.style.fontSize = `${currentSize}px`;
       }
-      while (textRef.current.scrollWidth > maxWidth && currentSize > 50) {
+      while ((textRef.current.scrollWidth > maxWidth || textRef.current.scrollHeight > maxHeight) && currentSize > 50) {
         currentSize -= 10;
         textRef.current.style.fontSize = `${currentSize}px`;
       }
-      while (textRef.current.scrollWidth > maxWidth && currentSize > 10) {
+      while ((textRef.current.scrollWidth > maxWidth || textRef.current.scrollHeight > maxHeight) && currentSize > 10) {
         currentSize -= 1;
         textRef.current.style.fontSize = `${currentSize}px`;
       }
-      while (textRef.current.scrollWidth < maxWidth && currentSize < 7000) {
+      while (textRef.current.scrollWidth < maxWidth && textRef.current.scrollHeight < maxHeight && currentSize < 7000) {
         const testSize = currentSize + 1;
         textRef.current.style.fontSize = `${testSize}px`;
-        if (textRef.current.scrollWidth <= maxWidth) {
+        if (textRef.current.scrollWidth <= maxWidth && textRef.current.scrollHeight <= maxHeight) {
           currentSize = testSize;
         } else {
           textRef.current.style.fontSize = `${currentSize}px`;

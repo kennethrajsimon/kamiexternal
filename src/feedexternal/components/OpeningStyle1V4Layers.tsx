@@ -109,7 +109,7 @@ export function OpeningStyle1ImageLayer({
                 <img 
                   alt="Cover" 
                   className="absolute h-[104.84%] left-[11.44%] max-w-none top-[0.09%] w-[88.49%]" 
-                  src={coverImage}
+                  src={typeof coverImage === 'string' ? coverImage.replace(/^\/src\/assets\//, '/assets/').replace(/^https?:\/\/(?:localhost|127\.0\.0\.1):3001\//, '/') : coverImage as any}
                   style={{ objectFit: imageFit }}
                 />
               )}

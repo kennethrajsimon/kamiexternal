@@ -1,6 +1,9 @@
+"use client";
+
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { getDrafts } from './services/api';
+
 import { useIsMobileOrTablet } from './hooks/useMediaQuery';
+import { Heart, Send, ArrowUp } from 'lucide-react';
 
 // Components from shared folder
 import ContentStyle1V4 from './components/ContentStyle1V4';
@@ -21,7 +24,7 @@ import CoverThumbnailFeatureArticleBw from './imports/CoverThumbnailFeatureArtic
 import CoverThumbnailCreatorSpotlight from './imports/CoverThumbnailCreatorSpotlight';
 import CoverThumbnailAnnouncement1 from './imports/CoverThumbnailAnnouncement1';
 
-interface SavedPage {
+export interface SavedPage {
   id: string;
   name: string;
   content: any;
@@ -83,7 +86,13 @@ function CoverComposite({ data }: { data: NonNullable<SavedPage['coverData']> })
       if (!el) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
-      const s = Math.min(w / 1512, h / 851);
+
+      // Calculate scale to "hug" (cover) the container
+      // We want the content to fill the container, potentially cropping if aspect ratios differ
+      const scaleX = w / 1512;
+      const scaleY = h / 851;
+      const s = Math.max(scaleX, scaleY); // Use max to ensure it covers the container (hugs)
+
       setScale(s);
     };
     update();
@@ -97,8 +106,8 @@ function CoverComposite({ data }: { data: NonNullable<SavedPage['coverData']> })
   }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0">
-      <div style={{ width: '1512px', height: '851px', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden flex items-center justify-center">
+      <div style={{ width: '1512px', height: '851px', transform: `scale(${scale})`, transformOrigin: 'center center', flexShrink: 0 }}>
         {data.selectedStyle === 2 ? (
           <CoverThumbnailFeatureArticleBw
             category={data.category}
@@ -173,7 +182,8 @@ function CoverComposite({ data }: { data: NonNullable<SavedPage['coverData']> })
 
 function FeedArticlePreview({
   page,
-  meta
+  meta,
+  onCopyLink
 }: {
   page: SavedPage;
   meta?: {
@@ -181,7 +191,29 @@ function FeedArticlePreview({
     category: string;
     savedAt: string;
   };
+  onCopyLink?: () => void;
 }) {
+  const copyShareLink = () => {
+    const url = `${window.location.origin}${window.location.pathname}#article-${page.id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        onCopyLink?.();
+      }).catch(() => {
+        onCopyLink?.();
+      });
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        onCopyLink?.();
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  };
   const [scale, setScale] = useState(1);
   const [mobileWidth, setMobileWidth] = useState<number | null>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
@@ -192,11 +224,11 @@ function FeedArticlePreview({
   const pages: FeedPageItem[] = pagesSource
     .filter((p) => p?.pageNumber !== 'cover')
     .map((p) => {
-    if (p?.fields?.topLabel === undefined && p?.styleType === 'content') {
-      return { ...p, fields: { ...p.fields, topLabel: '' } };
-    }
-    return p;
-  });
+      if (p?.fields?.topLabel === undefined && p?.styleType === 'content') {
+        return { ...p, fields: { ...p.fields, topLabel: '' } };
+      }
+      return p;
+    });
   const coverId = `${page.id}-cover`;
   const hasCover = Boolean(page.coverData || page.coverImage);
   const productsId = `${page.id}-products`;
@@ -222,11 +254,6 @@ function FeedArticlePreview({
   };
   const desktopPageOverlap = isMobileOrTablet ? 0 : 44;
   const [isAnimating, setIsAnimating] = useState(false);
-
-  const sanitizeInlineStyles = (html: string) => {
-    if (!html) return '';
-    return html.replace(/style="[^"]*"/gi, '');
-  };
 
   // 8-second repeating animation loop for flipboard effect
   useEffect(() => {
@@ -270,7 +297,7 @@ function FeedArticlePreview({
   useEffect(() => {
     if (isMobileOrTablet) return;
     let frameId = 0;
-    const measure = () => {
+    const measureOnce = () => {
       const nextHeights: Record<string, number> = {};
       measuredKeys.forEach((key) => {
         const el = pageRefs.current[key];
@@ -285,47 +312,20 @@ function FeedArticlePreview({
           }
         });
         const measuredHeight = (maxBottom - containerRect.top) / Math.max(scale, 0.0001);
-        // Only enforce 851px minimum height for standard pages and covers, not for products
-        const minHeight = key.endsWith('-products') ? 0 : 851;
+        const minHeight = key.endsWith('-cover') ? 851 : 0;
         nextHeights[key] = Math.max(minHeight, Math.ceil(measuredHeight));
       });
-      setPageHeights((prev) => {
-        const prevKeys = Object.keys(prev);
-        const nextKeys = Object.keys(nextHeights);
-        if (prevKeys.length !== nextKeys.length) {
-          return nextHeights;
-        }
-        for (const key of nextKeys) {
-          if (prev[key] !== nextHeights[key]) {
-            return nextHeights;
-          }
-        }
-        return prev;
-      });
+      setPageHeights(nextHeights);
     };
-    
-    // Initial measure
-    measure();
-    
-    // Repeatedly measure for a few seconds to catch image loads
-    const intervals = [100, 500, 1000, 2000, 3000];
-    const timers = intervals.map(t => setTimeout(() => {
-      frameId = window.requestAnimationFrame(measure);
-    }, t));
-
-    // Also verify when images load
-    const images = document.querySelectorAll('img');
-    images.forEach(img => {
-      if (img.complete) return;
-      img.addEventListener('load', measure);
-    });
-
+    frameId = window.requestAnimationFrame(measureOnce);
+    const t1 = window.setTimeout(measureOnce, 300);
+    const t2 = window.setTimeout(measureOnce, 1200);
     return () => {
       window.cancelAnimationFrame(frameId);
-      timers.forEach(t => clearTimeout(t));
-      images.forEach(img => img.removeEventListener('load', measure));
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
     };
-  }, [measuredKeys, scale, isMobileOrTablet]);
+  }, [measuredKeys, scale]);
 
   const renderPageForReadingMode = (renderPage: FeedPageItem, index: number) => {
     if (renderPage.styleType === 'intro') {
@@ -334,8 +334,7 @@ function FeedArticlePreview({
         <div
           className="w-full h-full relative flex items-center"
           style={{
-            backgroundColor: styles.background,
-            paddingLeft: '20.6px'
+            backgroundColor: styles.background
           }}
         >
           <div
@@ -343,9 +342,7 @@ function FeedArticlePreview({
             style={{
               width: '1512px',
               height: isIntroWithoutImage ? 'auto' : '851px',
-              minHeight: isIntroWithoutImage ? '851px' : undefined,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center'
+              minHeight: isIntroWithoutImage ? '851px' : undefined
             }}
           >
             {renderPage.selectedStyle === 1 && (
@@ -491,7 +488,7 @@ function FeedArticlePreview({
             key={`standalone-${index}`}
             className="text-[15px] leading-[24px]"
             style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-            dangerouslySetInnerHTML={{ __html: sanitizeInlineStyles(copy.text || '') }}
+            dangerouslySetInnerHTML={{ __html: copy.text || '' }}
           />
         ))}
         {paragraphHeaders?.map((header) => {
@@ -499,7 +496,7 @@ function FeedArticlePreview({
           return (
             <div key={header.id} className="flex flex-col gap-[8px]">
               {header.text && (
-                <div className="text-[13px] font-semibold tracking-wider" style={{ color: styles.textAccent }}>
+                <div className="text-[16px] font-semibold tracking-wider" style={{ color: styles.textAccent }}>
                   {header.text}
                 </div>
               )}
@@ -507,7 +504,7 @@ function FeedArticlePreview({
                 <div
                   className="text-[15px] leading-[24px]"
                   style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-                  dangerouslySetInnerHTML={{ __html: sanitizeInlineStyles(bodyCopy.text) }}
+                  dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
                 />
               )}
             </div>
@@ -522,7 +519,35 @@ function FeedArticlePreview({
       const coverImage = renderPage.images?.coverImage || null;
       const topLabel = renderPage.fields?.showTopLabel ? renderPage.fields?.topLabel : page.coverData?.category;
       return (
-        <div className="flex flex-col gap-[14px]" style={{ padding: '18px 16px 10px', backgroundColor: styles.background }}>
+        <div className="flex flex-col gap-[14px] relative" style={{ padding: '18px 16px 10px', backgroundColor: styles.background }}>
+          {/* Icons positioned to the right */}
+          <div className="absolute right-[16px] top-[18px] flex items-center gap-[16px]">
+            <div className="flex flex-col items-center gap-[4px]">
+              <Heart size={18} strokeWidth={1.5} color={styles.textPrimary} />
+              <div style={{ fontSize: '12px', color: styles.textPrimary }}>
+                {renderPage.fields?.iconCount1 || '112'}
+              </div>
+            </div>
+            <div
+              className="flex flex-col items-center gap-[4px] cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={copyShareLink}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  copyShareLink();
+                }
+              }}
+              title="Copy article link"
+              aria-label="Copy article link"
+            >
+              <Send size={18} strokeWidth={1.5} color={styles.textPrimary} />
+              <div style={{ fontSize: '12px', color: styles.textPrimary }}>
+                {renderPage.fields?.iconCount2 || '24'}
+              </div>
+            </div>
+          </div>
           {topLabel && (
             <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
               {topLabel}
@@ -578,7 +603,7 @@ function FeedArticlePreview({
             <div
               className="text-[14px] leading-[22px]"
               style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-              dangerouslySetInnerHTML={{ __html: sanitizeInlineStyles(renderPage.fields.description) }}
+              dangerouslySetInnerHTML={{ __html: renderPage.fields.description }}
             />
           )}
         </div>
@@ -595,9 +620,13 @@ function FeedArticlePreview({
             )}
             {renderPage.fields?.bodyCopies?.[0]?.text && (
               <div
-                className="text-[16px] leading-[24px]"
-                style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-                dangerouslySetInnerHTML={{ __html: sanitizeInlineStyles(renderPage.fields.bodyCopies[0].text) }}
+                className="text-[22px] font-light leading-[30px]"
+                style={{
+                  color: styles.textPrimary,
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+                dangerouslySetInnerHTML={{ __html: renderPage.fields.bodyCopies[0].text }}
               />
             )}
             {renderMobileTextBlocks(renderPage.fields?.paragraphHeaders, renderPage.fields?.bodyCopies?.slice(1))}
@@ -640,7 +669,55 @@ function FeedArticlePreview({
           </div>
         );
       }
-      if (renderPage.selectedStyle === 2 || renderPage.selectedStyle === 3) {
+      if (renderPage.selectedStyle === 2) {
+        return (
+          <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
+            {renderPage.fields?.topLabel && (
+              <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+                {renderPage.fields.topLabel}
+              </div>
+            )}
+            {renderMobileTextBlocks(renderPage.fields?.paragraphHeaders, renderPage.fields?.bodyCopies)}
+            {renderPage.images?.image1 && (
+              <div className="w-1/2 mx-auto">
+                <EFXWrapper
+                  glitchEnabled={!!renderPage.efx?.glitch}
+                  blurEnabled={!!renderPage.efx?.blur}
+                  chromaticEnabled={!!renderPage.efx?.chromatic}
+                  shakeEnabled={!!renderPage.efx?.shake}
+                  distortEnabled={!!renderPage.efx?.distort}
+                >
+                  <img
+                    src={renderPage.images.image1}
+                    alt=""
+                    className="w-full h-auto block rounded-[6px]"
+                    style={{ objectFit: renderPage.imageFits?.image1Fit || 'cover' }}
+                  />
+                </EFXWrapper>
+              </div>
+            )}
+            {renderPage.images?.image2 && (
+              <div className="w-1/2 mx-auto">
+                <EFXWrapper
+                  glitchEnabled={!!renderPage.efx?.glitch}
+                  blurEnabled={!!renderPage.efx?.blur}
+                  chromaticEnabled={!!renderPage.efx?.chromatic}
+                  shakeEnabled={!!renderPage.efx?.shake}
+                  distortEnabled={!!renderPage.efx?.distort}
+                >
+                  <img
+                    src={renderPage.images.image2}
+                    alt=""
+                    className="w-full h-auto block rounded-[6px]"
+                    style={{ objectFit: renderPage.imageFits?.image2Fit || 'cover' }}
+                  />
+                </EFXWrapper>
+              </div>
+            )}
+          </div>
+        );
+      }
+      if (renderPage.selectedStyle === 3) {
         return (
           <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
             {renderPage.fields?.topLabel && (
@@ -938,7 +1015,7 @@ function FeedArticlePreview({
   );
 }
 
-function FeedPage({
+export default function FeedPage({
   onBackToLanding,
   savedPages
 }: {
@@ -946,12 +1023,16 @@ function FeedPage({
   savedPages: SavedPage[];
 }) {
   const isMobileOrTablet = useIsMobileOrTablet();
+
   const publishedPages = savedPages
     .filter(page => page.isPublished)
     .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 
   const [visibleCount, setVisibleCount] = useState(5);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const hasHashScrolledRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -969,6 +1050,145 @@ function FeedPage({
 
     return () => observer.disconnect();
   }, [publishedPages.length]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = (message: string) => {
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    setToastMessage(message);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage(null);
+    }, 1800);
+  };
+
+  useEffect(() => {
+    const waitAndScroll = () => {
+      if (hasHashScrolledRef.current) return;
+      const hash = window.location.hash;
+      if (!hash) return;
+      const id = hash.slice(1);
+      if (!id.startsWith('article-')) return;
+      if (publishedPages.length === 0) return;
+      const articleId = id.replace('article-', '');
+      const idx = publishedPages.findIndex(p => p.id === articleId);
+      const targetIndex = idx === -1 ? 0 : idx;
+      const targetId = `article-${publishedPages[targetIndex].id}`;
+      if (idx !== -1 && visibleCount < idx + 1) {
+        setVisibleCount(idx + 1);
+      }
+      let cancelled = false;
+      const isArticleReady = (el: HTMLElement | null) => {
+        if (!el) return false;
+        if (el.offsetHeight <= 0) return false;
+        const imgs = Array.from(el.querySelectorAll('img'));
+        const allComplete = imgs.every(img => (img as HTMLImageElement).complete);
+        return allComplete;
+      };
+      const pollUntilReady = (timeoutMs: number, intervalMs: number) => {
+        const start = Date.now();
+        let stableCount = 0;
+        const prevHeights: Record<string, number> = {};
+        const tick = () => {
+          if (cancelled) return;
+          // Ensure all prior articles (including target) exist and are ready
+          let allReady = true;
+          for (let i = 0; i <= targetIndex; i++) {
+            const id = `article-${publishedPages[i].id}`;
+            const el = document.getElementById(id) as HTMLElement | null;
+            if (!isArticleReady(el)) {
+              allReady = false;
+              break;
+            }
+          }
+          // Check height stability across the set
+          if (allReady) {
+            let stable = true;
+            for (let i = 0; i <= targetIndex; i++) {
+              const id = `article-${publishedPages[i].id}`;
+              const el = document.getElementById(id) as HTMLElement | null;
+              const h = el ? el.getBoundingClientRect().height : 0;
+              const prev = prevHeights[id];
+              prevHeights[id] = h;
+              if (prev !== undefined && Math.abs(prev - h) > 1) {
+                stable = false;
+              }
+            }
+            if (stable) {
+              stableCount += 1;
+            } else {
+              stableCount = 0;
+            }
+            if (stableCount >= 3) {
+              const targetEl = document.getElementById(targetId);
+              if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+                hasHashScrolledRef.current = true;
+                return;
+              }
+            }
+          }
+          if (Date.now() - start < timeoutMs) {
+            window.setTimeout(tick, intervalMs);
+          } else {
+            const fallback = document.getElementById(targetId);
+            if (fallback) {
+              fallback.scrollIntoView({ behavior: 'smooth' });
+              hasHashScrolledRef.current = true;
+            }
+          }
+        };
+        tick();
+        return () => { cancelled = true; };
+      };
+      const cancel = pollUntilReady(12000, 200);
+      return cancel;
+    };
+    const cancel = waitAndScroll();
+    const onHashChange = () => {
+      hasHashScrolledRef.current = false;
+      const cancelInner = waitAndScroll();
+      if (typeof cancelInner === 'function') {
+        // no-op: kept for symmetry if needed
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+      if (typeof cancel === 'function') {
+        cancel();
+      }
+    };
+  }, [publishedPages, visibleCount]);
+
+  const copyShareLink = (id: string) => {
+    const url = `${window.location.origin}${window.location.pathname}#article-${id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link copied to clipboard');
+      }).catch(() => {
+        showToast('Link copied to clipboard');
+      });
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Link copied to clipboard');
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+  };
 
   const formatSavedAt = (value: SavedPage['savedAt']) => {
     const date = new Date(value);
@@ -1027,7 +1247,7 @@ function FeedPage({
                 style={{
                   color: '#f1f0eb',
                   letterSpacing: '-0.02em',
-                  fontSize: isMobileOrTablet ? '28px' : '36px'
+                  fontSize: '36px'
                 }}
               >
                 Feed
@@ -1074,15 +1294,15 @@ function FeedPage({
               const category = page.coverData?.category || 'PUBLISHED';
 
               return (
-                <div key={page.id}>
+                <div key={page.id} id={`article-${page.id}`}>
                   {index > 0 && (
-                    <div 
-                      style={{ 
-                        height: '1px', 
-                        backgroundColor: '#2a2a2a', 
+                    <div
+                      style={{
+                        height: '1px',
+                        backgroundColor: '#6e6e6e',
                         margin: isMobileOrTablet ? '24px 0' : '40px 0',
-                        width: '100%' 
-                      }} 
+                        width: '100%'
+                      }}
                     />
                   )}
                   <FeedArticlePreview
@@ -1092,7 +1312,32 @@ function FeedPage({
                       category,
                       savedAt: formatSavedAt(page.savedAt)
                     }}
+                    onCopyLink={() => showToast('Link copied to clipboard')}
                   />
+                  <div className="flex justify-center w-full mt-6 mb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => copyShareLink(page.id)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
+                        style={{ color: '#6e6e6e', border: '1px solid #6e6e6e' }}
+                        title="Copy article link"
+                        aria-label="Copy article link"
+                      >
+                        <Send size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const el = document.getElementById(`article-${page.id}`);
+                          el?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
+                        style={{ color: '#6e6e6e', border: '1px solid #6e6e6e' }}
+                      >
+                        <ArrowUp size={16} />
+                        Back to top of article
+                      </button>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -1117,47 +1362,28 @@ function FeedPage({
           <RecommendedArticles />
         </div>
       </div>
+      {toastMessage && (
+        <div
+          className="fixed z-50"
+          style={{
+            left: '50%',
+            bottom: isMobileOrTablet ? '16px' : '24px',
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div
+            className="rounded-full px-4 py-2 text-sm"
+            style={{
+              backgroundColor: 'rgba(42, 42, 42, 0.95)',
+              border: '1px solid #3a3a3a',
+              color: '#f1f0eb',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
+            }}
+          >
+            {toastMessage}
+          </div>
+        </div>
+      )}
     </div>
-  );
-}
-
-export default function Feed() {
-  const [savedPages, setSavedPages] = useState<SavedPage[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching drafts...');
-        const drafts = await getDrafts();
-        console.log('Drafts fetched:', drafts);
-        if (Array.isArray(drafts)) {
-          setSavedPages(drafts);
-        } else {
-          console.warn('Drafts is not an array:', drafts);
-        }
-      } catch (error) {
-        console.error('Error fetching drafts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="w-full h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white">
-        <div className="mb-4">Loading...</div>
-      </div>
-    );
-  }
-
-  return (
-    <FeedPage
-      savedPages={savedPages}
-      onBackToLanding={() => {}}
-    />
   );
 }

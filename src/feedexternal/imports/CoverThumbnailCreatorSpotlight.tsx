@@ -1,6 +1,5 @@
-import svgPaths from "./svg-q8xzalnf5b";
-import _imgRectangle1540 from "../assets/c5ce4e47ab90e08210a558deb1f6e4cba2392c2a.png";
-const imgRectangle1540 = (_imgRectangle1540 as any).src || _imgRectangle1540;
+import svgPaths from "./svg-422nfspwoc";
+import imgRectangle1540 from "../../assets/c5ce4e47ab90e08210a558deb1f6e4cba2392c2a.png";
 import { MediaDisplay } from "../components/MediaDisplay";
 import { useState } from 'react';
 
@@ -23,27 +22,27 @@ export default function CoverThumbnailCreatorSpotlight({ category, title, coverI
   const [activeIcon, setActiveIcon] = useState<'heart' | 'plane' | null>(null);
   const heartCount = iconCount1 || '112';
   const planeCount = iconCount2 || '23';
-  
+
   return (
     <div className="relative" style={{ width: '1512px', height: '851px', backgroundColor: (showBackgroundColor !== false) ? (backgroundColor || '#1a1a1a') : '#1a1a1a' }} data-name="Cover Thumbnail – Creator Spotlight">
       {backgroundImage && (
         <div className="absolute h-[851px] left-0 top-0 w-[1512px] overflow-hidden z-0">
-          <MediaDisplay 
-            src={backgroundImage} 
-            alt="" 
-            className="absolute inset-0 w-full h-full" 
-            objectFit={backgroundImageFit || 'cover'} 
+          <MediaDisplay
+            src={backgroundImage}
+            alt=""
+            className="absolute inset-0 w-full h-full"
+            objectFit={backgroundImageFit || 'cover'}
           />
         </div>
       )}
       {(showHeroImage !== false) && (
         <div className="absolute h-[851px] left-0 pointer-events-none top-0 w-[1512px]">
           <div className="absolute inset-0 overflow-hidden">
-            <MediaDisplay 
-              src={coverImage || imgRectangle1540} 
-              alt="" 
-              className="absolute h-[191.15%] left-[-2.78%] max-w-none top-[-91.15%] w-[106.04%]" 
-              objectFit={imageFit || 'cover'} 
+            <MediaDisplay
+              src={coverImage || (imgRectangle1540 as any)}
+              alt=""
+              className="absolute h-[191.15%] left-[-2.78%] max-w-none top-[-91.15%] w-[106.04%]"
+              objectFit={imageFit || 'cover'}
             />
           </div>
           <div aria-hidden="true" className="absolute border-[#f1f0eb] border-[1.099px] border-solid inset-0" />

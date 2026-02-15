@@ -843,13 +843,17 @@ export function ContentStyle2TextLayer({
               
               {paragraphHeaders?.map((header) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
+                const showHeader = !!header.text;
+                const showBody = !!bodyCopy?.text;
                 return (
                   <div key={header.id}>
-                    {header.text && (
+                    {(showHeader || showBody) && (
                       <>
                         <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                        {bodyCopy?.text && (
+                        {showHeader && (
+                          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
+                        )}
+                        {showBody && (
                           <>
                             <div 
                               className="mb-0 text-[15px]"

@@ -22,10 +22,9 @@ interface LandingPageProps {
   onOpenRecommendedArticles?: () => void;
   onOpenDraftLibrary?: () => void;
   onOpenGlitchDemo?: () => void;
-  onOpenFeedTest?: () => void;
 }
 
-export default function LandingPage({ onCreateNew, onLoadDraft, savedPages, onDeleteDraft, onOpenFeaturedProducts, onOpenRecommendedArticles, onOpenDraftLibrary, onOpenGlitchDemo, onOpenFeedTest }: LandingPageProps) {
+export default function LandingPage({ onCreateNew, onLoadDraft, savedPages, onDeleteDraft, onOpenFeaturedProducts, onOpenRecommendedArticles, onOpenDraftLibrary, onOpenGlitchDemo }: LandingPageProps) {
   const isMobileOrTablet = useIsMobileOrTablet();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [hoveredDraft, setHoveredDraft] = useState<string | null>(null);
@@ -549,41 +548,6 @@ export default function LandingPage({ onCreateNew, onLoadDraft, savedPages, onDe
           )}
         </div>
       )}
-
-      {/* Dev Tools */}
-      <div className="flex flex-wrap justify-center gap-[12px] mb-[40px]">
-        {onOpenGlitchDemo && (
-          <button
-            onClick={onOpenGlitchDemo}
-            className="px-[24px] py-[16px] rounded-[12px] font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-[12px]"
-            style={{
-              backgroundColor: '#2a2a2a',
-              color: '#f1f0eb',
-              border: '1px solid #3a3a3a',
-              fontSize: isMobileOrTablet ? '14px' : '16px'
-            }}
-          >
-            <Eye className="w-5 h-5" />
-            Glitch Demo
-          </button>
-        )}
-
-        {onOpenFeedTest && (
-          <button
-            onClick={onOpenFeedTest}
-            className="px-[24px] py-[16px] rounded-[12px] font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-[12px]"
-            style={{
-              backgroundColor: '#2a2a2a',
-              color: '#f1f0eb',
-              border: '1px solid #3a3a3a',
-              fontSize: isMobileOrTablet ? '14px' : '16px'
-            }}
-          >
-            <Eye className="w-5 h-5" />
-            Feed External Test
-          </button>
-        )}
-      </div>
 
       {/* Footer */}
       <div 

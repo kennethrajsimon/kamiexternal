@@ -74,8 +74,14 @@ export function ContentStyle4ImageLayer({
   const efx = useEFX();
   const isMobileOrTablet = useIsMobileOrTablet();
   
-  const img1Src = image1 || null;
-  const img2Src = image2 || null;
+  const normalize = (s?: string | null) => {
+    if (!s || typeof s !== 'string') return s || null;
+    let out = s.replace(/^\/src\/assets\//, '/assets/');
+    out = out.replace(/^https?:\/\/(?:localhost|127\.0\.0\.1):3001\//, '/');
+    return out;
+  };
+  const img1Src = normalize(image1);
+  const img2Src = normalize(image2);
   
   // Image 1 animation - simple slide up/down with fade
   const img1EnterStart = 0.05;
@@ -211,110 +217,110 @@ export function ContentStyle4ImageLayer({
 
   return (
     <>
-      {/* Desktop ONLY - Images in Image Layer with parallax */}
-      {!isMobileOrTablet && (
-        <>
-          {/* Left Image + Caption Unit */}
-          <div 
-            className="absolute left-[80px] top-[211px]"
-            style={{
-              opacity: img1Opacity,
-              transform: `translateY(${img1Y}px) scale(${img1Scale})`,
-              transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-              pointerEvents: 'none'
-            }}
-          >
-            {/* Image 1 */}
-            {img1Src && (
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div className="w-[660px] h-[429px]" style={{ overflow: 'hidden', borderRadius: '3px' }}>
-                <img 
-                  alt="" 
-                  className="w-full h-full rounded-[3px]" 
-                  style={{ objectFit: image1Fit }}
-                  src={img1Src} 
-                />
-              </div>
-            </EFXWrapper>
-            )}
-            
-            {/* Caption 1 - linked to image */}
-            {showCaption1 && (
-              <div className="absolute left-0 top-[444px] w-[660px]">
-                <p className="font-['Inter:Light',sans-serif] font-['Inter:Regular',sans-serif] font-light font-normal leading-[0] not-italic text-[#f1f0eb] text-[0px] w-full whitespace-pre-wrap">
-                  {caption1Title && (
-                    <span className="leading-[18px] text-[15px]">{caption1Title}</span>
-                  )}
-                  {caption1Subtitle && (
-                    <>
-                      <span className="leading-[18px] text-[12px]">
-                        <br aria-hidden="true" />
-                      </span>
-                      <span className="leading-[18px] text-[13px]">– {caption1Subtitle}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
+      {/* Images in Image Layer with parallax */}
+      {/* Left Image + Caption Unit */}
+      <div 
+        className="absolute left-[80px] top-[211px]"
+        style={{
+          left: isMobileOrTablet ? '50%' : undefined,
+          top: isMobileOrTablet ? '16px' : undefined,
+          opacity: img1Opacity,
+          transform: `${isMobileOrTablet ? 'translateX(-50%) ' : ''}translateY(${img1Y}px) scale(${img1Scale})`,
+          transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          pointerEvents: 'none'
+        }}
+      >
+        {/* Image 1 */}
+        {img1Src && (
+        <EFXWrapper
+          glitchEnabled={efx.glitchEnabled}
+          blurEnabled={efx.blurEnabled}
+          chromaticEnabled={efx.chromaticEnabled}
+          shakeEnabled={efx.shakeEnabled}
+          distortEnabled={efx.distortEnabled}
+        >
+          <div className="w-[660px] h-[429px]" style={{ overflow: 'hidden', borderRadius: '3px', width: isMobileOrTablet ? 'min(660px, 92vw)' : undefined }}>
+            <img 
+              alt="" 
+              className="w-full h-full rounded-[3px]" 
+              style={{ objectFit: image1Fit }}
+              src={img1Src} 
+            />
           </div>
-          
-          {/* Right Image + Caption Unit */}
-          <div 
-            className="absolute left-[770px] top-[211px]"
-            style={{
-              opacity: img2Opacity,
-              transform: `translateY(${img2Y}px) scale(${img2Scale})`,
-              transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-              pointerEvents: 'none'
-            }}
-          >
-            {/* Image 2 */}
-            {img2Src && (
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div className="w-[662px] h-[429px]">
-                <img 
-                  alt="" 
-                  className="w-full h-full" 
-                  style={{ objectFit: image2Fit }}
-                  src={img2Src} 
-                />
-              </div>
-            </EFXWrapper>
-            )}
-            
-            {/* Caption 2 - linked to image */}
-            {showCaption2 && (
-              <div className="absolute left-0 top-[444px] w-[662px]">
-                <p className="font-['Inter:Light',sans-serif] font-['Inter:Regular',sans-serif] font-light font-normal leading-[0] not-italic text-[#f1f0eb] text-[0px] w-full whitespace-pre-wrap">
-                  {caption2Title && (
-                    <span className="leading-[18px] text-[15px]">{caption2Title}</span>
-                  )}
-                  {caption2Subtitle && (
-                    <>
-                      <span className="leading-[18px] text-[12px]">
-                        <br aria-hidden="true" />
-                      </span>
-                      <span className="leading-[18px] text-[13px]">– {caption2Subtitle}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
+        </EFXWrapper>
+        )}
+        
+        {/* Caption 1 - linked to image */}
+        {showCaption1 && (
+          <div className="absolute left-0 top-[444px] w-[660px]" style={{ width: isMobileOrTablet ? 'min(660px, 92vw)' : undefined }}>
+            <p className="font-['Inter:Light',sans-serif] font-['Inter:Regular',sans-serif] font-light font-normal leading-[0] not-italic text-[#f1f0eb] text-[0px] w-full whitespace-pre-wrap">
+              {caption1Title && (
+                <span className="leading-[18px] text-[15px]">{caption1Title}</span>
+              )}
+              {caption1Subtitle && (
+                <>
+                  <span className="leading-[18px] text-[12px]">
+                    <br aria-hidden="true" />
+                  </span>
+                  <span className="leading-[18px] text-[13px]">– {caption1Subtitle}</span>
+                </>
+              )}
+            </p>
           </div>
-        </>
-      )}
+        )}
+      </div>
+      
+      {/* Right Image + Caption Unit */}
+      <div 
+        className="absolute left-[calc(50%+16px)] top-[211px]"
+        style={{
+          left: isMobileOrTablet ? '50%' : undefined,
+          top: isMobileOrTablet ? '16px' : undefined,
+          opacity: img2Opacity,
+          transform: `${isMobileOrTablet ? 'translateX(-50%) ' : ''}translateY(${img2Y}px) scale(${img2Scale})`,
+          transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          pointerEvents: 'none'
+        }}
+      >
+        {/* Image 2 */}
+        {img2Src && (
+        <EFXWrapper
+          glitchEnabled={efx.glitchEnabled}
+          blurEnabled={efx.blurEnabled}
+          chromaticEnabled={efx.chromaticEnabled}
+          shakeEnabled={efx.shakeEnabled}
+          distortEnabled={efx.distortEnabled}
+        >
+          <div className="w-[662px] h-[429px]" style={{ width: isMobileOrTablet ? 'min(662px, 92vw)' : undefined }}>
+            <img 
+              alt="" 
+              className="w-full h-full" 
+              style={{ objectFit: image2Fit }}
+              src={img2Src} 
+            />
+          </div>
+        </EFXWrapper>
+        )}
+        
+        {/* Caption 2 - linked to image */}
+        {showCaption2 && (
+          <div className="absolute left-0 top-[444px] w-[662px]" style={{ width: isMobileOrTablet ? 'min(662px, 92vw)' : undefined }}>
+            <p className="font-['Inter:Light',sans-serif] font-['Inter:Regular',sans-serif] font-light font-normal leading-[0] not-italic text-[#f1f0eb] text-[0px] w-full whitespace-pre-wrap">
+              {caption2Title && (
+                <span className="leading-[18px] text-[15px]">{caption2Title}</span>
+              )}
+              {caption2Subtitle && (
+                <>
+                  <span className="leading-[18px] text-[12px]">
+                    <br aria-hidden="true" />
+                  </span>
+                  <span className="leading-[18px] text-[13px]">– {caption2Subtitle}</span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
     </>
   );
 }

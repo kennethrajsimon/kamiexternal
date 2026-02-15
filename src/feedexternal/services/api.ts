@@ -15,7 +15,7 @@ const getApiBase = () => {
     }
   } catch (e) {}
   
-  return 'http://localhost:3001';
+  return ''; // Use relative path to leverage Next.js proxy
 };
 
 const apiBase = getApiBase();
@@ -31,9 +31,14 @@ export async function saveDraft(payload: any) {
 }
 
 export async function getDrafts() {
-  const res = await fetch(`${apiBase}/api/saved-pages`);
-  if (!res.ok) throw new Error('Failed to fetch drafts');
-  return res.json();
+  try {
+    const res = await fetch(`${apiBase}/api/saved-pages`);
+    if (!res.ok) throw new Error('Failed to fetch drafts');
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching drafts. Is the backend server running? Run 'npm run server' in the src directory.", error);
+    throw error;
+  }
 }
 
 export async function getDraftById(id: string) {

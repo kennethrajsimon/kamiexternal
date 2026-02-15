@@ -10,6 +10,19 @@ export function MediaDisplay({ src, alt = '', className = '', style = {}, object
   if (!src || typeof src !== 'string') {
     return null;
   }
+  const ERROR_IMG_SRC =
+    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
+  // Normalize dev-time Vite paths to public assets
+  if (src.startsWith('/src/assets/')) {
+    src = src.replace('/src/assets/', '/assets/');
+  }
+  // Normalize local backend absolute URLs to relative so Vite proxy applies
+  try {
+    const u = new URL(src);
+    if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && u.port === '3001') {
+      src = u.pathname + (u.search || '');
+    }
+  } catch {}
   // Check if URL is YouTube
   const isYouTube = (url: string) => {
     return url.includes('youtube.com') || url.includes('youtu.be');
@@ -63,6 +76,10 @@ export function MediaDisplay({ src, alt = '', className = '', style = {}, object
       alt={alt}
       className="w-full h-full object-cover rounded-[3px]"
       style={finalStyle}
+      onError={(e) => {
+        const target = e.currentTarget as HTMLImageElement;
+        target.src = ERROR_IMG_SRC;
+      }}
     />
   );
 }

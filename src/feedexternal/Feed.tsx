@@ -312,16 +312,24 @@ function FeedArticlePreview({
         setMobileWidth(w);
         return;
       }
-      setScale(Math.min(1, w / 1512));
+      const zoomScale = typeof window !== 'undefined' ? window.visualViewport?.scale ?? 1 : 1;
+      const adjustedWidth = w * zoomScale;
+      setScale(Math.min(1, adjustedWidth / 1512));
     };
     update();
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', update);
-      return () => window.removeEventListener('resize', update);
+    window.addEventListener('resize', update);
+    const visualViewport = typeof window !== 'undefined' ? window.visualViewport : null;
+    visualViewport?.addEventListener('resize', update);
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(update);
+      if (wrapperRef.current) observer.observe(wrapperRef.current);
     }
-    const observer = new ResizeObserver(update);
-    if (wrapperRef.current) observer.observe(wrapperRef.current);
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener('resize', update);
+      visualViewport?.removeEventListener('resize', update);
+      observer?.disconnect();
+    };
   }, [isMobileOrTablet]);
 
   useEffect(() => {

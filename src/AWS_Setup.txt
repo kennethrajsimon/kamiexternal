@@ -1,0 +1,98 @@
+AWS Setup (EC2 + Nginx + PM2) for this app
+
+1) Create an EC2 instance
+   - AMI: Ubuntu 22.04 LTS
+   - Instance size: t3.small or larger
+   - Storage: 20 GB+
+   - Security Group inbound rules:
+     - TCP 22 (SSH) from your IP
+     - TCP 80 (HTTP) from anywhere
+     - TCP 443 (HTTPS) from anywhere
+
+2) SSH into the instance
+   ssh -i /path/to/key.pem ubuntu@YOUR_EC2_PUBLIC_IP
+
+3) Install Node.js, npm, git, nginx, and pm2
+   sudo apt update
+   sudo apt install -y git nginx
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt install -y nodejs
+   sudo npm install -g pm2
+
+4) Upload the project to the server
+   Option A: Git clone
+     sudo mkdir -p /var/www/kami
+     sudo chown -R ubuntu:ubuntu /var/www/kami
+     git clone YOUR_REPO_URL /var/www/kami
+   Option B: SCP a zip
+     scp -i /path/to/key.pem project.zip ubuntu@YOUR_EC2_PUBLIC_IP:/var/www/kami
+     cd /var/www/kami && unzip project.zip
+
+5) Install dependencies
+   cd /var/www/kami/src
+   npm install
+
+6) Build the frontend (Vite)
+   cd /var/www/kami
+   npx vite --config src/vite.config.new.ts build
+   Output folder will be /var/www/kami/build
+
+7) Prepare the backend storage
+   - SQLite database location: /var/www/kami/src/server/app.sqlite
+   - Uploads directory: /var/www/kami/src/public/uploads
+   Ensure uploads directory exists and is writable:
+     mkdir -p /var/www/kami/src/public/uploads
+     sudo chown -R ubuntu:ubuntu /var/www/kami/src/public/uploads
+
+8) Start the backend API with PM2
+   cd /var/www/kami/src
+   PORT=3001 pm2 start server/server.js --name kami-api
+   pm2 save
+   pm2 startup
+
+9) Configure Nginx to serve the frontend and proxy the API
+   Create /etc/nginx/sites-available/kami with the following:
+
+   server {
+     listen 80;
+     server_name YOUR_DOMAIN_OR_EC2_IP;
+
+     root /var/www/kami/build;
+     index index.html;
+
+     location / {
+       try_files $uri $uri/ /index.html;
+     }
+
+     location /api/ {
+       proxy_pass http://127.0.0.1:3001;
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection "upgrade";
+       proxy_set_header Host $host;
+       proxy_cache_bypass $http_upgrade;
+     }
+
+     location /uploads/ {
+       proxy_pass http://127.0.0.1:3001;
+       proxy_set_header Host $host;
+     }
+   }
+
+   Enable the site and reload Nginx:
+     sudo ln -s /etc/nginx/sites-available/kami /etc/nginx/sites-enabled/
+     sudo nginx -t
+     sudo systemctl reload nginx
+
+10) Optional: Add HTTPS with Certbot
+   sudo apt install -y certbot python3-certbot-nginx
+   sudo certbot --nginx -d YOUR_DOMAIN
+
+11) Verify
+   - Open http://YOUR_DOMAIN_OR_EC2_IP
+   - API check: curl http://YOUR_DOMAIN_OR_EC2_IP/api/saved-pages
+
+Notes
+- The frontend is built with Vite using src/vite.config.new.ts
+- The backend runs on port 3001 and serves /api and /uploads
+- Back up /var/www/kami/src/server/app.sqlite and /var/www/kami/src/public/uploads regularly

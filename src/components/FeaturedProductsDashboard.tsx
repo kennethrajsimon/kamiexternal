@@ -38,35 +38,37 @@ interface FeaturedProductsDashboardProps {
 }
 
 export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedProductsDashboardProps) {
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Guitar',
-      price: '$499.00',
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop'
-    },
-    // ... initial products will be replaced if a set is loaded
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const [kamiProducts, setKamiProducts] = useState<KamiProduct[]>([]);
   const [productSets, setProductSets] = useState<ProductSet[]>([]);
   const [currentSetName, setCurrentSetName] = useState<string>('My Product Set');
   const [currentSetId, setCurrentSetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [categoryQuery, setCategoryQuery] = useState('');
+  const [kamiLoading, setKamiLoading] = useState(false);
+  const [kamiError, setKamiError] = useState<string | null>(null);
 
   useEffect(() => {
     loadKamiProducts();
     loadProductSets();
   }, []);
 
-  const loadKamiProducts = async () => {
+  const loadKamiProducts = async (category?: string) => {
+    setKamiLoading(true);
+    setKamiError(null);
     try {
-      const data = await getKamiProducts(1, 20); // Fetch first 20 products
+      const data = await getKamiProducts(1, 20, category);
       if (data && data.data) {
         setKamiProducts(data.data);
+      } else {
+        setKamiProducts([]);
       }
     } catch (error) {
       console.error('Failed to load Kami products', error);
+      setKamiError('Failed to load products');
+    } finally {
+      setKamiLoading(false);
     }
   };
 
@@ -187,6 +189,11 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
 
   const handleDeleteProduct = (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  const handleSearchByCategory = async () => {
+    const trimmed = categoryQuery.trim();
+    await loadKamiProducts(trimmed || undefined);
   };
 
   const handleAddProduct = () => {
@@ -351,11 +358,49 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
 
           {/* Master List */}
           <div className="mb-[32px] border-b border-[#3a3a3a] pb-[24px]">
-             <h2 className="text-lg font-bold text-[#f1f0eb] mb-[16px]">Master List</h2>
+             <div className="flex items-center justify-between mb-[16px]">
+               <h2 className="text-lg font-bold text-[#f1f0eb]">Master List</h2>
+               <div className="text-xs font-semibold text-[#9e9e9d]">
+                 {kamiLoading ? 'Loading...' : `${kamiProducts.length} Records`}
+               </div>
+             </div>
+             <div className="mb-[12px]">
+               <label className="block text-xs font-semibold text-[#9e9e9d] mb-[8px]">Search by category</label>
+               <div className="flex gap-[8px]">
+                 <input
+                   type="text"
+                   value={categoryQuery}
+                   onChange={(e) => setCategoryQuery(e.target.value)}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter') {
+                       handleSearchByCategory();
+                     }
+                   }}
+                   className="flex-1 px-[12px] py-[10px] rounded-[6px] border bg-[#1a1a1a] border-[#3a3a3a] text-[#f1f0eb] text-sm font-semibold outline-none"
+                   placeholder="music"
+                 />
+                 <button
+                   onClick={handleSearchByCategory}
+                   className="px-[12px] py-[10px] rounded-[6px] bg-[#2a2a2a] border border-[#3a3a3a] text-[#f1f0eb] text-xs font-bold hover:opacity-80"
+                   disabled={kamiLoading}
+                 >
+                   Search
+                 </button>
+               </div>
+               {kamiLoading && (
+                 <div className="mt-[8px] text-xs text-[#9e9e9d]">Loading...</div>
+               )}
+               {!kamiLoading && kamiError && (
+                 <div className="mt-[8px] text-xs text-[#ff4949]">{kamiError}</div>
+               )}
+             </div>
              <div className="h-[300px] overflow-y-auto pr-[8px] space-y-[12px]">
-               {kamiProducts.map(p => {
-                  let img = '';
-                  try { img = JSON.parse(p.metadata).image } catch(e){}
+              {kamiProducts.map(p => {
+                 let img = '';
+                 try { img = JSON.parse(p.metadata).image } catch(e){}
+                 if (img?.startsWith('ipfs://')) {
+                   img = `https://ipfs.io/ipfs/${img.slice('ipfs://'.length)}`;
+                 }
                   return (
                     <div key={p.id} className="flex items-center gap-[12px] p-[8px] rounded-[6px] bg-[#2a2a2a] border border-[#3a3a3a]">
                        <div className="w-[40px] h-[40px] rounded-[4px] bg-[#1a1a1a] overflow-hidden flex-shrink-0">

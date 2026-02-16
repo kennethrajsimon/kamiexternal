@@ -40,8 +40,15 @@ export async function sharePage(id: string) {
   return res.json();
 }
 
-export async function getKamiProducts(pageNumber = 1, pageSize = 10) {
-  const res = await fetch(`https://api.kamiunlimited.com/content-management-service/products?pageSize=${pageSize}&pageNumber=${pageNumber}`, {
+export async function getKamiProducts(pageNumber = 1, pageSize = 100, category?: string) {
+  const params = new URLSearchParams({
+    pageSize: String(pageSize),
+    pageNumber: String(pageNumber)
+  });
+  if (category && category.trim()) {
+    params.set('cat', category.trim());
+  }
+  const res = await fetch(`https://api.kamiunlimited.com/content-management-service/products?${params.toString()}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'BEARER eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..7rl064gd8TLl-4ouT6v18g.1rPuUNOF5r29_5MxCWl_ItIlHlzdkDR9xj-w2mM_q9-uPwglew2ocCitOMRavuske__SVNLFR6bZxKwIrfvdN60kT6cZUThOEfWCmrcitOM.n9R5AP-5PZ3aEeUxw4OQtA'

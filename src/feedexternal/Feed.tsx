@@ -232,17 +232,24 @@ function FeedArticlePreview({
     }
   };
   const [scale, setScale] = useState(1);
+  const pagesSource = Array.isArray(page.pages) && page.pages.length > 0 ? page.pages : page.content ? [page.content] : [];
+  const coverPage = pagesSource.find((p) => p?.pageNumber === 'cover');
+  const selectedProductSetId = page.productSetId ?? coverPage?.productSetId ?? null;
   const products = useMemo(() => {
-    if (!page.productSetId || !productSets) return undefined;
-    const set = productSets.find(s => s.id === page.productSetId);
-    return set?.products;
-  }, [page.productSetId, productSets]);
+    if (!productSets || productSets.length === 0) return undefined;
+    
+    if (selectedProductSetId) {
+      const set = productSets.find(s => s.id === selectedProductSetId);
+      if (set) return set.products;
+    }
+    
+    return productSets[0].products;
+  }, [selectedProductSetId, productSets]);
   const [mobileWidth, setMobileWidth] = useState<number | null>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const pageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [pageHeights, setPageHeights] = useState<Record<string, number>>({});
-  const pagesSource = Array.isArray(page.pages) && page.pages.length > 0 ? page.pages : page.content ? [page.content] : [];
   const pages: FeedPageItem[] = pagesSource
     .filter((p) => p?.pageNumber !== 'cover')
     .map((p) => {
@@ -255,7 +262,8 @@ function FeedArticlePreview({
   const hasCover = Boolean(page.coverData || page.coverImage);
   const productsId = `${page.id}-products`;
   const recommendedId = `${page.id}-recommended`;
-  const showProducts = page.hasFeaturedProducts !== false;
+  const hasFeaturedProducts = page.hasFeaturedProducts ?? coverPage?.hasFeaturedProducts;
+  const showProducts = hasFeaturedProducts !== false;
   const pageIdsKey = useMemo(() => pages.map((p) => p.id).join('|'), [pages]);
   const pageIdList = useMemo(() => (pageIdsKey ? pageIdsKey.split('|') : []), [pageIdsKey]);
   const measuredKeys = useMemo(() => {

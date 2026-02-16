@@ -226,6 +226,7 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
         showBackgroundText: true,
         showBackgroundColor: true
       },
+      hasFeaturedProducts: false,
       efx: {
         glitch: true,
         blur: false,
@@ -726,7 +727,8 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
         image1Fit: 'cover',
         image2Fit: 'cover'
       },
-      fields: defaultFields
+      fields: defaultFields,
+      hasFeaturedProducts: false
     };
 
     setDocPages(prev => [...prev, newPage]);
@@ -849,8 +851,8 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
       savedAt: new Date(),
       coverImage,
       coverData,
-      hasFeaturedProducts: currentPageSnapshot.hasFeaturedProducts ?? (original?.hasFeaturedProducts ?? true),
-      productSetId: currentPageSnapshot.productSetId ?? (original?.productSetId ?? null),
+      hasFeaturedProducts: coverPage?.hasFeaturedProducts ?? currentPageSnapshot.hasFeaturedProducts ?? (original?.hasFeaturedProducts ?? true),
+      productSetId: coverPage?.productSetId ?? currentPageSnapshot.productSetId ?? (original?.productSetId ?? null),
       hasRecommendedReading: original?.hasRecommendedReading ?? false,
       efxMode: efxGlitch ? 'glitch' : efxBlur ? 'blur' : efxChromatic ? 'chromatic' : efxShake ? 'shake' : efxDistort ? 'distort' : 'none'
     };
@@ -2883,7 +2885,7 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                           <input
                             type="checkbox"
-                            checked={currentPage.hasFeaturedProducts !== false}
+                            checked={!!currentPage.hasFeaturedProducts}
                             onChange={(e) => {
                               const newPages = [...docPages];
                               const page = { ...newPages[currentPageIndex] };
@@ -2898,12 +2900,12 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                             className="font-['Inter:Medium',sans-serif]"
                             style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
                           >
-                            {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
+                            {!!currentPage.hasFeaturedProducts ? 'On' : 'Off'}
                           </span>
                         </label>
                       </div>
                       
-                      {currentPage.hasFeaturedProducts !== false && (
+                      {!!currentPage.hasFeaturedProducts && (
                         <div style={{ marginTop: '16px' }}>
                           <label 
                             className="block mb-2 font-['Inter:Medium',sans-serif]"
@@ -3532,22 +3534,22 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                             <input
                               type="checkbox"
                               checked={currentPage.hasFeaturedProducts !== false}
-                              onChange={(e) => {
-                                const newPages = [...docPages];
-                                const page = { ...newPages[currentPageIndex] };
-                                page.hasFeaturedProducts = e.target.checked;
-                                newPages[currentPageIndex] = page;
-                                setDocPages(newPages);
-                              }}
-                              className="w-5 h-5 cursor-pointer"
-                              style={{ accentColor: '#11ff49' }}
-                            />
-                            <span
-                              className="font-['Inter:Medium',sans-serif]"
-                              style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
-                            >
-                              {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
-                            </span>
+                            onChange={(e) => {
+                              const newPages = [...docPages];
+                              const page = { ...newPages[currentPageIndex] };
+                              page.hasFeaturedProducts = e.target.checked;
+                              newPages[currentPageIndex] = page;
+                              setDocPages(newPages);
+                            }}
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ accentColor: '#11ff49' }}
+                          />
+                          <span
+                            className="font-['Inter:Medium',sans-serif]"
+                            style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
+                          >
+                            {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
+                          </span>
                           </label>
                         </div>
                       </div>
@@ -4148,8 +4150,23 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
             // Cast to any to access dynamic properties added by updatePageRoot
             const hasFeaturedProducts = (coverPage as any)?.hasFeaturedProducts;
             const productSetId = (coverPage as any)?.productSetId;
-            const selectedProductSet = productSets.find(set => set.id === productSetId);
-            const products = selectedProductSet?.products || [];
+            
+            // Logic to determine products with fallback
+            let products: any[] = [];
+            if (productSets && productSets.length > 0) {
+              if (productSetId) {
+                const set = productSets.find(s => s.id === productSetId);
+                if (set) {
+                  products = set.products;
+                } else {
+                  // Fallback to first set if ID not found
+                  products = productSets[0].products;
+                }
+              } else {
+                // Fallback to first set if no ID selected
+                products = productSets[0].products;
+              }
+            }
             
             return (
               <ReadingModeV4

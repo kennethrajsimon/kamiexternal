@@ -61,6 +61,12 @@ interface ProductCarouselProps {
 export function ProductCarousel({ products: propProducts, onEdit }: ProductCarouselProps) {
   const displayProducts = propProducts || products;
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const openCollection = (product: any) => {
+    const collectionId = product?.collectionId ?? product?.collectionid ?? product?.collection_id;
+    if (!collectionId) return;
+    const url = `https://app.kamiunlimited.com/collection/${collectionId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -192,7 +198,8 @@ export function ProductCarousel({ products: propProducts, onEdit }: ProductCarou
         {displayProducts.map((product) => (
           <div key={product.id} className="card-wrapper flex items-center justify-center relative">
             <div 
-              className="product-card relative w-full aspect-square rounded-[3px] flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"
+              className="product-card relative w-full aspect-square rounded-[3px] flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden cursor-pointer"
+              onClick={() => openCollection(product)}
             >
               {/* Product Image */}
               <img 

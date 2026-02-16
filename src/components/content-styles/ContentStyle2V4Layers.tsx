@@ -75,24 +75,27 @@ export function ContentStyle2ImageLayer({
   let img1Scale = 1;
   let img1Blur = 0;
 
-  if (scrollProgress === 0) {
-    img1Opacity = 1;
-    img1Y = 0;
-    img1Scale = 1.0;
-    img1Blur = 0;
-  } else if (scrollProgress < img1EnterStart) {
-    img1Opacity = 0;
-    img1Y = 160;
-    img1Scale = 1.05;
-    img1Blur = 12;
-  } else if (scrollProgress >= img1EnterStart && scrollProgress < img1EnterEnd) {
-    const progress = (scrollProgress - img1EnterStart) / (img1EnterEnd - img1EnterStart);
-    const eased = 1 - Math.pow(1 - progress, 3.5);
-    
-    img1Opacity = eased;
-    img1Y = (1 - eased) * 160;
-    img1Scale = 1.05 - (eased * 0.05);
-    img1Blur = (1 - eased) * 12;
+  if (scrollProgress < img1EnterEnd) {
+    // Fully visible or entering
+    if (scrollProgress < img1EnterStart) {
+       img1Opacity = 1;
+       img1Y = 0;
+       img1Scale = 1.0;
+       img1Blur = 0;
+    } else {
+       // Original entrance logic kept for compatibility if needed, but simplified
+       // Actually, let's just make it visible throughout the "entrance" phase to avoid blankness
+       const progress = (scrollProgress - img1EnterStart) / (img1EnterEnd - img1EnterStart);
+       const eased = 1 - Math.pow(1 - progress, 3.5);
+       
+       // Blend from "Start" state to "End" state?
+       // Current logic had it appear.
+       // Let's just keep it visible.
+       img1Opacity = 1;
+       img1Y = 0;
+       img1Scale = 1.0;
+       img1Blur = 0;
+    }
   } else if (scrollProgress >= img1EnterEnd && scrollProgress < img1ExitStart) {
     const progress = (scrollProgress - img1EnterEnd) / (img1ExitStart - img1EnterStart);
     img1Opacity = 1;
@@ -368,8 +371,8 @@ export function ContentStyle2TextLayer({
       const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
       if (relMatch) {
         const relParts = relMatch[2].split(/\s+/).filter(Boolean);
-        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
-        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        if (!relParts.some((part: string) => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some((part: string) => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
         const relValue = relParts.join(' ');
         next = next.replace(relMatch[0], `rel="${relValue}"`);
       } else {

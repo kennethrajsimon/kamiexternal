@@ -85,20 +85,11 @@ export function ContentStyle1ImageLayer({
   let img1Y = 0;
   let img1Scale = 1;
 
-  if (scrollProgress === 0) {
+  if (scrollProgress < img1EnterEnd) {
+    // Fully visible or entering - KEEP VISIBLE to prevent blank page
     img1Opacity = 1;
     img1Y = 0;
     img1Scale = 1;
-  } else if (scrollProgress < img1EnterStart) {
-    img1Opacity = 0;
-    img1Y = isMobileOrTablet ? 60 : 120;
-    img1Scale = 0.85;
-  } else if (scrollProgress >= img1EnterStart && scrollProgress < img1EnterEnd) {
-    const progress = (scrollProgress - img1EnterStart) / (img1EnterEnd - img1EnterStart);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    img1Opacity = eased;
-    img1Y = (1 - eased) * (isMobileOrTablet ? 60 : 120);
-    img1Scale = 0.85 + (eased * 0.15);
   } else if (scrollProgress >= img1EnterEnd && scrollProgress < img1ExitStart) {
     img1Opacity = 1;
     img1Y = 0;
@@ -125,20 +116,11 @@ export function ContentStyle1ImageLayer({
   let img2Y = 0;
   let img2Scale = 1;
 
-  if (scrollProgress === 0) {
+  if (scrollProgress < img2EnterEnd) {
+    // Fully visible or entering - KEEP VISIBLE to prevent blank page
     img2Opacity = 1;
     img2Y = 0;
     img2Scale = 1;
-  } else if (scrollProgress < img2EnterStart) {
-    img2Opacity = 0;
-    img2Y = isMobileOrTablet ? 60 : 120;
-    img2Scale = 0.85;
-  } else if (scrollProgress >= img2EnterStart && scrollProgress < img2EnterEnd) {
-    const progress = (scrollProgress - img2EnterStart) / (img2EnterEnd - img2EnterStart);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    img2Opacity = eased;
-    img2Y = (1 - eased) * (isMobileOrTablet ? 60 : 120);
-    img2Scale = 0.85 + (eased * 0.15);
   } else if (scrollProgress >= img2EnterEnd && scrollProgress < img2ExitStart) {
     img2Opacity = 1;
     img2Y = 0;

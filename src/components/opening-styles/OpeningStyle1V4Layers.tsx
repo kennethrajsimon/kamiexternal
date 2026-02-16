@@ -147,7 +147,9 @@ export function OpeningStyle1TextLayer({
   imageFit = 'cover',
   textPrimary = '#f1f0eb',
   textAccent = '#11ff49',
-  fontFamily = 'Inter'
+  fontFamily = 'Inter',
+  hasFeaturedProducts = false,
+  productSetId
 }: OpeningStyle1V4LayersProps) {
   const scrollProgress = usePageScrollProgress(scrollContainerRef, pageIndex, totalPages);
   const efx = useEFX();

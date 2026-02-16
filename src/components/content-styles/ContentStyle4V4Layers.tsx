@@ -88,25 +88,12 @@ export function ContentStyle4ImageLayer({
   let img1Scale = 1;
   let img1Blur = 0;
   
-  if (scrollProgress < img1EnterStart) {
-    if (scrollProgress === 0) {
-      img1Opacity = 1;
-      img1Y = 0;
-      img1Scale = 1;
-      img1Blur = 0;
-    } else {
-      img1Opacity = 0;
-      img1Y = 50;
-      img1Scale = 0.90;
-      img1Blur = 5;
-    }
-  } else if (scrollProgress >= img1EnterStart && scrollProgress < img1EnterEnd) {
-    const progress = (scrollProgress - img1EnterStart) / (img1EnterEnd - img1EnterStart);
-    const eased = 1 - Math.pow(1 - progress, 2.5);
-    img1Opacity = eased;
-    img1Y = (1 - eased) * 50;
-    img1Scale = 0.90 + (eased * 0.10);
-    img1Blur = (1 - eased) * 5;
+  if (scrollProgress < img1EnterEnd) {
+    // Fully visible or entering - KEEP VISIBLE to prevent blank page
+    img1Opacity = 1;
+    img1Y = 0;
+    img1Scale = 1;
+    img1Blur = 0;
   } else if (scrollProgress >= img1EnterEnd && scrollProgress < img1ExitStart) {
     img1Opacity = 1;
     img1Y = 0;
@@ -137,25 +124,12 @@ export function ContentStyle4ImageLayer({
   let img2Scale = 1;
   let img2Blur = 0;
   
-  if (scrollProgress < img2EnterStart) {
-    if (scrollProgress === 0) {
-      img2Opacity = 1;
-      img2Y = 0;
-      img2Scale = 1;
-      img2Blur = 0;
-    } else {
-      img2Opacity = 0;
-      img2Y = 50;
-      img2Scale = 0.90;
-      img2Blur = 5;
-    }
-  } else if (scrollProgress >= img2EnterStart && scrollProgress < img2EnterEnd) {
-    const progress = (scrollProgress - img2EnterStart) / (img2EnterEnd - img2EnterStart);
-    const eased = 1 - Math.pow(1 - progress, 2.5);
-    img2Opacity = eased;
-    img2Y = (1 - eased) * 50;
-    img2Scale = 0.90 + (eased * 0.10);
-    img2Blur = (1 - eased) * 5;
+  if (scrollProgress < img2EnterEnd) {
+    // Fully visible or entering - KEEP VISIBLE to prevent blank page
+    img2Opacity = 1;
+    img2Y = 0;
+    img2Scale = 1;
+    img2Blur = 0;
   } else if (scrollProgress >= img2EnterEnd && scrollProgress < img2ExitStart) {
     img2Opacity = 1;
     img2Y = 0;
@@ -346,8 +320,8 @@ export function ContentStyle4TextLayer({
   const scrollProgress = usePageScrollProgress(scrollContainerRef, pageIndex, totalPages);
   const isMobileOrTablet = useIsMobileOrTablet();
   
-  const img1Src = image1 || imgSingkarpor;
-  const img2Src = image2 || imgFemaleDesigner1;
+  const img1Src = image1 || null;
+  const img2Src = image2 || null;
   
   const firstBodyCopy = bodyCopies?.[0]?.text || '';
   const shouldRenderFirstBodyCopy = firstBodyCopy && !bodyCopies?.[0]?.afterHeaderId;
@@ -569,87 +543,89 @@ export function ContentStyle4TextLayer({
             )}
 
             {/* Image 1 - Mobile Inline */}
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div className="w-full mb-[12px]">
-                <img 
-                  alt="" 
-                  className="w-full rounded-[4px]" 
-                  style={{ 
-                    objectFit: image1Fit,
-                    aspectRatio: '660/429',
-                    opacity: img1OpacityMobile,
-                    transform: `translateY(${img1YMobile}px) scale(${img1ScaleMobile})`,
-                    transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                    filter: `blur(${img1BlurMobile}px)`
-                  }}
-                  src={img1Src} 
-                />
-                {/* Caption 1 */}
-                {showCaption1 && (caption1Title || caption1Subtitle) && (
-                  <div className="mt-[12px] w-full">
-                    <p className="font-['Inter'] text-[#f1f0eb] leading-[18px] whitespace-pre-wrap">
-                      {caption1Title && (
-                        <span className="text-[14px] font-light">{caption1Title}</span>
-                      )}
-                      {caption1Subtitle && (
-                        <>
-                          {caption1Title && <br />}
-                          <span className="text-[12px] font-light">– {caption1Subtitle}</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </EFXWrapper>
+            {img1Src && (
+              <EFXWrapper
+                glitchEnabled={efx.glitchEnabled}
+                blurEnabled={efx.blurEnabled}
+                chromaticEnabled={efx.chromaticEnabled}
+                shakeEnabled={efx.shakeEnabled}
+                distortEnabled={efx.distortEnabled}
+              >
+                <div className="w-full mb-[12px]">
+                  <img 
+                    alt="" 
+                    className="w-full rounded-[4px]" 
+                    style={{ 
+                      objectFit: image1Fit,
+                      aspectRatio: '660/429',
+                      opacity: img1OpacityMobile,
+                      transform: `translateY(${img1YMobile}px) scale(${img1ScaleMobile})`,
+                      transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                      filter: `blur(${img1BlurMobile}px)`
+                    }}
+                    src={img1Src} 
+                  />
+                  {showCaption1 && (caption1Title || caption1Subtitle) && (
+                    <div className="mt-[12px] w-full">
+                      <p className="font-['Inter'] text-[#f1f0eb] leading-[18px] whitespace-pre-wrap">
+                        {caption1Title && (
+                          <span className="text-[14px] font-light">{caption1Title}</span>
+                        )}
+                        {caption1Subtitle && (
+                          <>
+                            {caption1Title && <br />}
+                            <span className="text-[12px] font-light">– {caption1Subtitle}</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </EFXWrapper>
+            )}
 
             {/* Image 2 - Mobile Inline */}
-            <EFXWrapper
-              glitchEnabled={efx.glitchEnabled}
-              blurEnabled={efx.blurEnabled}
-              chromaticEnabled={efx.chromaticEnabled}
-              shakeEnabled={efx.shakeEnabled}
-              distortEnabled={efx.distortEnabled}
-            >
-              <div className="w-full mb-[20px]">
-                <img 
-                  alt="" 
-                  className="w-full rounded-[3px]" 
-                  style={{ 
-                    height: '350px',
-                    objectFit: image2Fit,
-                    aspectRatio: '662/429',
-                    opacity: img2OpacityMobile,
-                    transform: `translateY(${img2YMobile}px) scale(${img2ScaleMobile})`,
-                    transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                    filter: `blur(${img2BlurMobile}px)`
-                  }}
-                  src={img2Src} 
-                />
-                {/* Caption 2 */}
-                {showCaption2 && (caption2Title || caption2Subtitle) && (
-                  <div className="mt-[12px] w-full">
-                    <p className="font-['Inter'] text-[#f1f0eb] leading-[18px] whitespace-pre-wrap">
-                      {caption2Title && (
-                        <span className="text-[14px] font-light">{caption2Title}</span>
-                      )}
-                      {caption2Subtitle && (
-                        <>
-                          {caption2Title && <br />}
-                          <span className="text-[12px] font-light">– {caption2Subtitle}</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </EFXWrapper>
+            {img2Src && (
+              <EFXWrapper
+                glitchEnabled={efx.glitchEnabled}
+                blurEnabled={efx.blurEnabled}
+                chromaticEnabled={efx.chromaticEnabled}
+                shakeEnabled={efx.shakeEnabled}
+                distortEnabled={efx.distortEnabled}
+              >
+                <div className="w-full mb-[20px]">
+                  <img 
+                    alt="" 
+                    className="w-full rounded-[3px]" 
+                    style={{ 
+                      height: '350px',
+                      objectFit: image2Fit,
+                      aspectRatio: '662/429',
+                      opacity: img2OpacityMobile,
+                      transform: `translateY(${img2YMobile}px) scale(${img2ScaleMobile})`,
+                      transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                      filter: `blur(${img2BlurMobile}px)`
+                    }}
+                    src={img2Src} 
+                  />
+                  {showCaption2 && (caption2Title || caption2Subtitle) && (
+                    <div className="mt-[12px] w-full">
+                      <p className="font-['Inter'] text-[#f1f0eb] leading-[18px] whitespace-pre-wrap">
+                        {caption2Title && (
+                          <span className="text-[14px] font-light">{caption2Title}</span>
+                        )}
+                        {caption2Subtitle && (
+                          <>
+                            {caption2Title && <br />}
+                            <span className="text-[12px] font-light">– {caption2Subtitle}</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </EFXWrapper>
+            )}
 
             {/* Headers and Body Copies */}
             {paragraphHeaders?.map((header, index) => {

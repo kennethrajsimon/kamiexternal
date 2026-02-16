@@ -74,6 +74,7 @@ export function ReadingModeV4({
 
   // Filter out cover page for reading mode
   const contentPages = pages.filter(p => p.pageNumber !== 'cover');
+  const showPlaceholder = contentPages.length === 0;
 
   // Get top label from Page 1 (the first intro page)
   const topLabel = contentPages.length > 0 && contentPages[0].fields?.topLabel 
@@ -165,11 +166,10 @@ export function ReadingModeV4({
         >
           {/* Reading Container - Desktop: 1512x851 fixed, Mobile: Full viewport width */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, z: -1000 }}
+            initial={{ scale: 0.8, opacity: 0 }}
             animate={{ 
               scale: isExiting ? 0.8 : 1, 
-              opacity: isExiting ? 0 : 1,
-              z: isExiting ? -1000 : 0
+              opacity: isExiting ? 0 : 1
             }}
             transition={{ 
               duration: isMobileOrTablet ? 0.8 : 1.5,
@@ -177,7 +177,7 @@ export function ReadingModeV4({
             }}
             className="relative"
             style={{
-              backgroundColor: styles.background,
+              backgroundColor: styles.background || '#1a1a1a',
               width: embedded ? '1512px' : isMobileOrTablet ? '100vw' : '1512px',
               height: embedded ? '851px' : isMobileOrTablet ? '100vh' : '851px',
               overflow: 'hidden', // 🔑 KEY: Clips everything to viewport
@@ -3485,6 +3485,22 @@ export function ReadingModeV4({
             >
               <div style={{ width: isMobileOrTablet ? '100%' : '1512px' }}>
                 {/* Render all content pages as sections */}
+
+                {showPlaceholder && (
+                  <div 
+                    className="flex flex-col items-center justify-center text-center p-8"
+                    style={{ 
+                      height: '50vh', 
+                      width: '100%',
+                      scrollSnapAlign: 'center',
+                      color: styles.textPrimary || '#f1f0eb'
+                    }}
+                  >
+                    <p style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>No content pages to preview.</p>
+                    <p style={{ fontSize: '14px', opacity: 0.7 }}>Add content pages to the article.</p>
+                  </div>
+                )}
+
                 {contentPages.map((page, index) => {
                   // Auto height for Intro page (Style 1) when no cover image is present
                   const isIntroWithoutImage = page.styleType === 'intro' && !page.images?.coverImage;

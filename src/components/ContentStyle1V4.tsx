@@ -228,8 +228,8 @@ export default function ContentStyle1V4({
       const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
       if (relMatch) {
         const relParts = relMatch[2].split(/\s+/).filter(Boolean);
-        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
-        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        if (!relParts.some((part: string) => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some((part: string) => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
         const relValue = relParts.join(' ');
         next = next.replace(relMatch[0], `rel="${relValue}"`);
       } else {

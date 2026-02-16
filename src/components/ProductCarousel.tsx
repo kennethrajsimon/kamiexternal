@@ -58,7 +58,8 @@ interface ProductCarouselProps {
   onEdit?: () => void;
 }
 
-export function ProductCarousel({ products: _products, onEdit }: ProductCarouselProps) {
+export function ProductCarousel({ products: propProducts, onEdit }: ProductCarouselProps) {
+  const displayProducts = propProducts || products;
   const [isMouseDown, setIsMouseDown] = useState(false);
 
   useEffect(() => {
@@ -188,7 +189,7 @@ export function ProductCarousel({ products: _products, onEdit }: ProductCarousel
 
       {/* Main Scroll Area - restored gap-2 for tightest overlap */}
       <div className={`scroll-container flex items-center w-full h-[350px] sm:h-[650px] overflow-x-auto gap-2 ${isMouseDown ? 'is-pressed' : ''}`}>
-        {products.map((product) => (
+        {displayProducts.map((product) => (
           <div key={product.id} className="card-wrapper flex items-center justify-center relative">
             <div 
               className="product-card relative w-full aspect-square rounded-[3px] flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"

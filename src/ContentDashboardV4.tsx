@@ -27,7 +27,7 @@ import { MobilePropertiesContent } from './components/MobilePropertiesContent_NE
 import { MobileCoverProperties } from './components/MobileCoverProperties';
 import { MobileContentStyle1Properties } from './components/MobileContentStyle1Properties';
 import { MobileNav } from './components/MobileNav';
-import { saveDraft, getDrafts, getDraftById } from './services/api';
+import { saveDraft, getDrafts, getDraftById, getProductSets } from './services/api';
 import _imgCoverImage from "./assets/67d0f537221b199b259a2444a228f3a95653ff33.png";
 import _imgMaleDesigner from "./assets/1e2c0b75f3380f734d584408cd01b575701ebed4.png";
 import _imgFemaleDesigner from "./assets/39c384392b8924f5f2b6d757fe522edd04101ed2.png";
@@ -134,6 +134,7 @@ interface Page {
     distort: boolean;
   };
   hasFeaturedProducts?: boolean;
+  productSetId?: string;
 }
 
 interface ContentDashboardV4Props {
@@ -186,6 +187,13 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
   // Transition animation state for Cover → Reading Mode
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [_transitionPhase, setTransitionPhase] = useState<'idle' | 'scaleUp' | 'zoom' | 'fade'>('idle');
+
+  // Product Sets State
+  const [productSets, setProductSets] = useState<any[]>([]);
+
+  useEffect(() => {
+    getProductSets().then(setProductSets).catch(err => console.error('Failed to load product sets', err));
+  }, []);
 
 
   // Page management - Start with Cover Thumbnail
@@ -434,6 +442,16 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
       return () => clearTimeout(timer);
     }
   }, [isReadingMode, currentPageIndex]); // Trigger when entering reading mode or changing page
+
+  // Update root field for current page
+  const updatePageRoot = (key: string, value: any) => {
+    setDocPages(prev => {
+      const newPages = [...prev];
+      const page = { ...newPages[currentPageIndex], [key]: value };
+      newPages[currentPageIndex] = page;
+      return newPages;
+    });
+  };
 
   // Update field for current page
   const updatePageField = (fieldPath: string, value: any) => {
@@ -832,6 +850,7 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
       coverImage,
       coverData,
       hasFeaturedProducts: currentPageSnapshot.hasFeaturedProducts ?? (original?.hasFeaturedProducts ?? true),
+      productSetId: currentPageSnapshot.productSetId ?? (original?.productSetId ?? null),
       hasRecommendedReading: original?.hasRecommendedReading ?? false,
       efxMode: efxGlitch ? 'glitch' : efxBlur ? 'blur' : efxChromatic ? 'chromatic' : efxShake ? 'shake' : efxDistort ? 'distort' : 'none'
     };
@@ -999,6 +1018,8 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                 textPrimary={styles.textPrimary}
                 textAccent={styles.textAccent}
                 fontFamily={styles.fontFamily}
+                hasFeaturedProducts={page.hasFeaturedProducts}
+                productSetId={page.productSetId}
               />
             )}
           </div>
@@ -1221,6 +1242,8 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
           textPrimary={styles.textPrimary}
           textAccent={styles.textAccent}
           fontFamily={styles.fontFamily}
+          hasFeaturedProducts={page.hasFeaturedProducts}
+          productSetId={page.productSetId}
         />
       );
     }
@@ -1603,8 +1626,10 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                 setEfxBlur={setEfxBlur}
                 setEfxChromatic={setEfxChromatic}
                 setEfxShake={setEfxShake}
-                setEfxDistort={setEfxDistort}
-              />
+              setEfxDistort={setEfxDistort}
+              productSets={productSets}
+              updatePageRoot={updatePageRoot}
+            />
             )}
 
             {currentPage.styleType === 'content' && currentPage.selectedStyle === 1 && (
@@ -1927,6 +1952,8 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                   textPrimary={styles.textPrimary}
                   textAccent={styles.textAccent}
                   fontFamily={styles.fontFamily}
+                  hasFeaturedProducts={currentPage.hasFeaturedProducts}
+                  productSetId={currentPage.productSetId}
                 />
               )}
               {currentPage.selectedStyle === 2 && (
@@ -2836,54 +2863,92 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                       </>
                     )}
 
-                    {/* Product Carousel Visibility Toggle */}
-                    {currentPage.styleType === 'cover' && (
-                      <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div>
-                            <h3
-                              className="font-['Inter:SemiBold',sans-serif]"
-                              style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
-                            >
-                              Featured Products
-                            </h3>
-                            <p
-                              className="font-['Inter:Regular',sans-serif]"
-                              style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
-                            >
-                              Show product carousel in this article
-                            </p>
-                          </div>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={currentPage.hasFeaturedProducts !== false}
+                    {/* Featured Products Toggle */}
+                    <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <h3
+                            className="font-['Inter:SemiBold',sans-serif]"
+                            style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
+                          >
+                            Featured Products
+                          </h3>
+                          <p
+                            className="font-['Inter:Regular',sans-serif]"
+                            style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
+                          >
+                            Show product carousel in this article
+                          </p>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={currentPage.hasFeaturedProducts !== false}
+                            onChange={(e) => {
+                              const newPages = [...docPages];
+                              const page = { ...newPages[currentPageIndex] };
+                              page.hasFeaturedProducts = e.target.checked;
+                              newPages[currentPageIndex] = page;
+                              setDocPages(newPages);
+                            }}
+                            className="w-5 h-5 cursor-pointer"
+                            style={{ accentColor: '#11ff49' }}
+                          />
+                          <span
+                            className="font-['Inter:Medium',sans-serif]"
+                            style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
+                          >
+                            {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
+                          </span>
+                        </label>
+                      </div>
+                      
+                      {currentPage.hasFeaturedProducts !== false && (
+                        <div style={{ marginTop: '16px' }}>
+                          <label 
+                            className="block mb-2 font-['Inter:Medium',sans-serif]"
+                            style={{ fontSize: '13px', fontWeight: '600', color: '#9e9e9d', textTransform: 'uppercase' }}
+                          >
+                            Select Product Set
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={currentPage.productSetId || ''}
                               onChange={(e) => {
                                 const newPages = [...docPages];
                                 const page = { ...newPages[currentPageIndex] };
-                                page.hasFeaturedProducts = e.target.checked;
+                                page.productSetId = e.target.value;
                                 newPages[currentPageIndex] = page;
                                 setDocPages(newPages);
                               }}
-                              className="w-5 h-5 cursor-pointer"
-                              style={{ accentColor: '#11ff49' }}
-                            />
-                            <span
-                              className="font-['Inter:Medium',sans-serif]"
-                              style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
+                              className="w-full px-4 py-3 rounded-lg border appearance-none cursor-pointer font-['Inter:Medium',sans-serif]"
+                              style={{
+                                backgroundColor: '#2a2a2a',
+                                borderColor: '#3a3a3a',
+                                color: styles.textPrimary,
+                                fontSize: '15px'
+                              }}
                             >
-                              {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
-                            </span>
-                          </label>
+                              <option value="">Select a product set...</option>
+                              {productSets.map(set => (
+                                <option key={set.id} value={set.id}>{set.name}</option>
+                              ))}
+                            </select>
+                            <ChevronDown 
+                              size={18} 
+                              style={{ color: '#9e9e9d', position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </>
                 )}
 
                 {/* Intro Page Fields */}
                 {currentPage.styleType === 'intro' && (
                   <>
+
                     <ImageUploader
                       value={currentPage.images.coverImage || ''}
                       onChange={(url) => {
@@ -4078,18 +4143,31 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
             animationDelay: '0ms'
           }}
         >
-          <ReadingModeV4
-            pages={docPages}
-            styles={styles}
-            onClose={handleExitReadingMode}
-            onBackToCover={handleBackToCover}
-            onBackToLanding={undefined}
-            onPropertiesClick={undefined}
-            renderBackgroundLayer={renderBackgroundLayer}
-            renderImageLayer={renderImageLayer}
-            renderTextLayer={renderTextLayer}
-            scrollContainerRef={scrollContainerRef}
-          />
+          {(() => {
+            const coverPage = docPages.find(p => p.pageNumber === 'cover');
+            // Cast to any to access dynamic properties added by updatePageRoot
+            const hasFeaturedProducts = (coverPage as any)?.hasFeaturedProducts;
+            const productSetId = (coverPage as any)?.productSetId;
+            const selectedProductSet = productSets.find(set => set.id === productSetId);
+            const products = selectedProductSet?.products || [];
+            
+            return (
+              <ReadingModeV4
+                pages={docPages}
+                styles={styles}
+                onClose={handleExitReadingMode}
+                onBackToCover={handleBackToCover}
+                onBackToLanding={undefined}
+                onPropertiesClick={undefined}
+                renderBackgroundLayer={renderBackgroundLayer}
+                renderImageLayer={renderImageLayer}
+                renderTextLayer={renderTextLayer}
+                scrollContainerRef={scrollContainerRef}
+                hasFeaturedProducts={hasFeaturedProducts}
+                products={products}
+              />
+            );
+          })()}
         </div>
       )}
 

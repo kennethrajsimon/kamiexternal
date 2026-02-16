@@ -46,6 +46,8 @@ interface ReadingModeV4Props {
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   embedded?: boolean;
   showControls?: boolean;
+  hasFeaturedProducts?: boolean;
+  products?: any[];
 }
 
 export function ReadingModeV4({ 
@@ -60,7 +62,9 @@ export function ReadingModeV4({
   renderTextLayer,
   scrollContainerRef,
   embedded = false,
-  showControls = true
+  showControls = true,
+  hasFeaturedProducts = false,
+  products = []
 }: ReadingModeV4Props) {
   const isMobileOrTablet = useIsMobileOrTablet();
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -3503,21 +3507,23 @@ export function ReadingModeV4({
                 })}
 
                 {/* Product Carousel Section */}
-                <div style={{ 
-                  scrollSnapAlign: 'center',
-                  minHeight: 'auto',
-                  height: 'auto',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  backgroundColor: styles.background,
-                  paddingTop: isMobileOrTablet ? '0px' : '50px',
-                  paddingBottom: isMobileOrTablet ? '0px' : '20px',
-                  marginTop: '0',
-                  marginBottom: '0'
-                }}>
-                  <ProductCarousel />
-                </div>
+                {hasFeaturedProducts && products.length > 0 && (
+                  <div style={{ 
+                    scrollSnapAlign: 'center',
+                    minHeight: 'auto',
+                    height: 'auto',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'center',
+                    backgroundColor: styles.background,
+                    paddingTop: isMobileOrTablet ? '0px' : '50px',
+                    paddingBottom: isMobileOrTablet ? '0px' : '20px',
+                    marginTop: '0',
+                    marginBottom: '0'
+                  }}>
+                    <ProductCarousel products={products} />
+                  </div>
+                )}
 
                 {/* Recommended Articles Section */}
                 <div style={{ 

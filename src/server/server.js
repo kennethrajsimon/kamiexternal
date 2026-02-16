@@ -53,7 +53,8 @@ db.prepare(`
     saved_at TEXT,
     efx_mode TEXT,
     has_featured_products INTEGER DEFAULT 1,
-    has_recommended_reading INTEGER DEFAULT 0
+    has_recommended_reading INTEGER DEFAULT 0,
+    product_set_id TEXT
   )
 `).run();
 
@@ -67,8 +68,59 @@ addColumnIfMissing('section_visibility_json', 'TEXT');
 addColumnIfMissing('selected_style', 'TEXT');
 addColumnIfMissing('has_featured_products', 'INTEGER DEFAULT 1');
 addColumnIfMissing('has_recommended_reading', 'INTEGER DEFAULT 0');
+addColumnIfMissing('product_set_id', 'TEXT');
 addColumnIfMissing('likes', 'INTEGER DEFAULT 0');
 addColumnIfMissing('shares', 'INTEGER DEFAULT 0');
+
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS product_sets (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    products_json TEXT,
+    created_at TEXT
+  )
+`).run();
+
+app.get('/api/product-sets', (req, res) => {
+  const rows = db.prepare('SELECT * FROM product_sets ORDER BY created_at DESC').all();
+  const sets = rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    products: JSON.parse(r.products_json),
+    createdAt: r.created_at
+  }));
+  res.json(sets);
+});
+
+app.post('/api/product-sets', (req, res) => {
+  const { id, name, products, createdAt } = req.body;
+  
+  // Check if exists
+  const existing = db.prepare('SELECT id FROM product_sets WHERE id = ?').get(id);
+  
+  if (existing) {
+    const stmt = db.prepare(`
+      UPDATE product_sets
+      SET name = ?, products_json = ?
+      WHERE id = ?
+    `);
+    stmt.run(name, JSON.stringify(products), id);
+  } else {
+    const stmt = db.prepare(`
+      INSERT INTO product_sets (id, name, products_json, created_at)
+      VALUES (?, ?, ?, ?)
+    `);
+    stmt.run(id, name, JSON.stringify(products), createdAt || new Date().toISOString());
+  }
+  
+  res.json({ success: true, id });
+});
+
+app.delete('/api/product-sets/:id', (req, res) => {
+  const { id } = req.params;
+  db.prepare('DELETE FROM product_sets WHERE id = ?').run(id);
+  res.json({ success: true });
+});
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
@@ -96,6 +148,7 @@ app.get('/api/saved-pages', (req, res) => {
     savedAt: r.saved_at,
     efxMode: r.efx_mode,
     hasFeaturedProducts: !!r.has_featured_products,
+    productSetId: r.product_set_id,
     hasRecommendedReading: !!r.has_recommended_reading,
     likes: r.likes || 0,
     shares: r.shares || 0
@@ -151,6 +204,7 @@ app.get('/api/saved-pages/:id', (req, res) => {
     savedAt: row.saved_at,
     efxMode: row.efx_mode,
     hasFeaturedProducts: !!row.has_featured_products,
+    productSetId: row.product_set_id,
     hasRecommendedReading: !!row.has_recommended_reading
   };
   res.json(item);
@@ -193,8 +247,8 @@ app.post('/api/saved-pages', (req, res) => {
     INSERT INTO saved_pages (
       id, name, content_json, pages_json, styles_json, section_visibility_json, selected_style, current_page_index,
       cover_image, cover_data_json, is_published, saved_at, efx_mode,
-      has_featured_products, has_recommended_reading
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      has_featured_products, has_recommended_reading, product_set_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name=excluded.name,
       content_json=excluded.content_json,
@@ -209,7 +263,8 @@ app.post('/api/saved-pages', (req, res) => {
       saved_at=excluded.saved_at,
       efx_mode=excluded.efx_mode,
       has_featured_products=excluded.has_featured_products,
-      has_recommended_reading=excluded.has_recommended_reading
+      has_recommended_reading=excluded.has_recommended_reading,
+      product_set_id=excluded.product_set_id
   `).run(
     id,
     payload.name || 'Untitled',
@@ -225,7 +280,8 @@ app.post('/api/saved-pages', (req, res) => {
     payload.savedAt || now,
     payload.efxMode || 'none',
     payload.hasFeaturedProducts ? 1 : 0,
-    payload.hasRecommendedReading ? 1 : 0
+    payload.hasRecommendedReading ? 1 : 0,
+    payload.productSetId || null
   );
 
   // Delete orphaned image files (old images no longer in the new payload)

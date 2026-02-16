@@ -37,6 +37,8 @@ interface MobileCoverPropertiesProps {
   setEfxChromatic: (value: boolean) => void;
   setEfxShake: (value: boolean) => void;
   setEfxDistort: (value: boolean) => void;
+  productSets: any[];
+  updatePageRoot: (key: string, value: any) => void;
 }
 
 const coverTemplates = [
@@ -94,7 +96,9 @@ export function MobileCoverProperties({
   setEfxBlur,
   setEfxChromatic,
   setEfxShake,
-  setEfxDistort
+  setEfxDistort,
+  productSets,
+  updatePageRoot
 }: MobileCoverPropertiesProps) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
@@ -735,6 +739,47 @@ export function MobileCoverProperties({
           </div>
         </>
       )}
+
+      {/* Featured Products Section */}
+      <div className="space-y-3 pt-4 border-t border-[#333]">
+        <div className="flex items-center justify-between">
+          <label className="text-[13px] font-medium text-[#f1f0eb]">Featured Products</label>
+          <button
+            onClick={() => {
+              const newValue = !currentPage.hasFeaturedProducts;
+              // We need to update the page object directly
+              updatePageRoot('hasFeaturedProducts', newValue);
+            }}
+            className={`w-10 h-6 rounded-full relative transition-colors ${
+              currentPage.hasFeaturedProducts ? 'bg-[#11ff49]' : 'bg-[#333]'
+            }`}
+          >
+            <div
+              className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+                currentPage.hasFeaturedProducts ? 'left-5' : 'left-1'
+              }`}
+            />
+          </button>
+        </div>
+        
+        {currentPage.hasFeaturedProducts && (
+          <div className="space-y-2">
+            <label className="text-[11px] font-medium text-[#888]">Select Product Set</label>
+            <select
+              value={currentPage.productSetId || ''}
+              onChange={(e) => updatePageRoot('productSetId', e.target.value)}
+              className="w-full h-10 bg-[#1a1a1a] border border-[#333] rounded-lg px-3 text-[13px] text-white focus:outline-none focus:border-[#555]"
+            >
+              <option value="">Select a set...</option>
+              {productSets.map((set) => (
+                <option key={set.id} value={set.id}>
+                  {set.name} ({set.products?.length || 0} products)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Action Buttons */}
       <div className="border-t pt-6 mt-6" style={{ borderColor: '#f1f0eb' }}>

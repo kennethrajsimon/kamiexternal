@@ -3,6 +3,8 @@ import { EFXWrapper } from './EFXWrapper';
 import { useIsMobileOrTablet } from '../hooks/useMediaQuery';
 import { Heart, Send } from 'lucide-react';
 import { FlipBoardText } from './FlipBoardText';
+import { ProductCarousel } from './ProductCarousel';
+import { getProductSets } from '../services/api';
 
 interface OpeningStyle1Props {
   title: string;
@@ -24,6 +26,8 @@ interface OpeningStyle1Props {
     shake?: boolean;
     distort?: boolean;
   };
+  hasFeaturedProducts?: boolean;
+  productSetId?: string;
 }
 
 export function OpeningStyle1({
@@ -39,12 +43,15 @@ export function OpeningStyle1({
   textPrimary = '#f1f0eb',
   textAccent = '#11ff49',
   fontFamily = 'Inter',
-  efx
+  efx,
+  hasFeaturedProducts,
+  productSetId
 }: OpeningStyle1Props) {
   const [hoveredIcon, setHoveredIcon] = useState<'heart' | 'plane' | null>(null);
   const [activeIcon, setActiveIcon] = useState<'heart' | 'plane' | null>(null);
   const [scrollY, setScrollY] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
   const isMobileOrTablet = useIsMobileOrTablet();
 
   // Handle scroll for mobile animations
@@ -52,6 +59,19 @@ export function OpeningStyle1({
     const target = e.currentTarget;
     setScrollY(target.scrollTop);
   };
+
+  useEffect(() => {
+    if (hasFeaturedProducts && productSetId) {
+      getProductSets().then(sets => {
+        const set = sets.find((s: any) => s.id === productSetId);
+        if (set) {
+          setProducts(set.products || []);
+        }
+      }).catch(err => console.error('Failed to load product set', err));
+    } else {
+      setProducts([]);
+    }
+  }, [hasFeaturedProducts, productSetId]);
 
   // 8-second repeating animation loop
   useEffect(() => {
@@ -178,14 +198,13 @@ export function OpeningStyle1({
                   onMouseUp={() => setActiveIcon(null)}
                 >
                   <Heart
-                    size={20}
-                    strokeWidth={1.6}
-                    color={hoveredIcon === 'heart' || activeIcon === 'heart' ? textAccent : textPrimary}
-                    fill={activeIcon === 'heart' ? textAccent : 'none'}
+                    size={24}
+                    fill={activeIcon === 'heart' ? textPrimary : 'none'}
+                    strokeWidth={1.5}
+                    className="transition-transform duration-200"
+                    style={{ transform: hoveredIcon === 'heart' ? 'scale(1.1)' : 'scale(1)' }}
                   />
-                  <div style={{ fontSize: '14px', color: textPrimary }}>
-                    {iconCount1}
-                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: '400' }}>{iconCount1}</span>
                 </div>
                 <div
                   className="flex flex-col items-center gap-[6px]"
@@ -198,14 +217,12 @@ export function OpeningStyle1({
                   onMouseUp={() => setActiveIcon(null)}
                 >
                   <Send
-                    size={20}
-                    strokeWidth={1.6}
-                    color={hoveredIcon === 'plane' || activeIcon === 'plane' ? textAccent : textPrimary}
-                    fill={activeIcon === 'plane' ? textAccent : 'none'}
+                    size={24}
+                    strokeWidth={1.5}
+                    className="transition-transform duration-200"
+                    style={{ transform: hoveredIcon === 'plane' ? 'scale(1.1)' : 'scale(1)' }}
                   />
-                  <div style={{ fontSize: '14px', color: textPrimary }}>
-                    {iconCount2}
-                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: '400' }}>{iconCount2}</span>
                 </div>
               </div>
             </div>
@@ -242,6 +259,13 @@ export function OpeningStyle1({
             </div>
           </div>
         </div>
+
+          {/* Product Carousel - Desktop */}
+          {hasFeaturedProducts && products.length > 0 && (
+             <div className="absolute w-full bottom-[40px] px-[80px]" style={{ pointerEvents: 'auto', zIndex: 50 }}>
+               <ProductCarousel products={products} />
+             </div>
+          )}
       </div>
     );
   }
@@ -520,6 +544,13 @@ export function OpeningStyle1({
             </div>
           </div>
         </div>
+
+        {/* Product Carousel */}
+        {hasFeaturedProducts && products.length > 0 && (
+          <div className="w-full mt-[60px] mb-[40px]">
+             <ProductCarousel products={products} />
+          </div>
+        )}
       </div>
     </div>
   );

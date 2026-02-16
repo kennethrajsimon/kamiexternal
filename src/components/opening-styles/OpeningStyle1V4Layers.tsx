@@ -6,6 +6,8 @@ import { usePageScrollProgress } from '../../hooks/usePageScrollProgress';
 import { useEFX } from '../EFXContext';
 import { useIsMobileOrTablet } from '../../hooks/useMediaQuery';
 import { FlipBoardText } from '../FlipBoardText';
+import { ProductCarousel } from '../ProductCarousel';
+import { getProductSets } from '../../services/api';
 
 interface OpeningStyle1V4LayersProps {
   pageIndex: number;
@@ -20,6 +22,14 @@ interface OpeningStyle1V4LayersProps {
   textPrimary?: string;
   textAccent?: string;
   fontFamily?: string;
+  // New props for Featured Products
+  hasFeaturedProducts?: boolean;
+  productSetId?: string;
+  // Additional props used in ContentDashboardV4 but missing in interface
+  topLabel?: string;
+  iconCount1?: string;
+  iconCount2?: string;
+  isTitleAnimating?: boolean;
 }
 
 // Background Layer (completely static, no animation)
@@ -147,6 +157,22 @@ export function OpeningStyle1TextLayer({
   const [activeIcon, setActiveIcon] = useState<'heart' | 'plane' | null>(null);
   const heartCount = 112;
   const planeCount = 23;
+  
+  // Fetch products for carousel
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (hasFeaturedProducts && productSetId) {
+      getProductSets().then(sets => {
+        const set = sets.find((s: any) => s.id === productSetId);
+        if (set) {
+          setProducts(set.products || []);
+        }
+      }).catch(err => console.error('Failed to load product set', err));
+    } else {
+      setProducts([]);
+    }
+  }, [hasFeaturedProducts, productSetId]);
   
   useEffect(() => {
     const animationDuration = 2000;
@@ -303,6 +329,11 @@ export function OpeningStyle1TextLayer({
               </p>
             </div>
             
+            {hasFeaturedProducts && products.length > 0 && (
+              <div className="w-full mt-[40px] mb-[40px]" style={{ pointerEvents: 'auto' }}>
+                 <ProductCarousel products={products} />
+              </div>
+            )}
             <div style={{ height: '50px', width: '100%', flexShrink: 0 }}></div>
             
             <div 
@@ -465,6 +496,13 @@ export function OpeningStyle1TextLayer({
           }}
         >
           {description}
+        </div>
+      )}
+
+      {/* Mobile Carousel */}
+      {hasFeaturedProducts && products.length > 0 && (
+        <div className="w-full mt-[60px] mb-[40px]" style={{ pointerEvents: 'auto' }}>
+           <ProductCarousel products={products} />
         </div>
       )}
 

@@ -1,6 +1,8 @@
 'use client';
 
 import { ChevronDown, Eye, X, Trash2, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getProductSets } from '../services/api';
 import { MobileImageUploader } from './MobileImageUploader';
 import { RichTextEditor } from './RichTextEditor';
 import _imgDefaultCoverHero from "../assets/931ef8e14bd8f3516acd9bea1676dbd4b8d4987d.png";
@@ -73,6 +75,12 @@ export function MobilePropertiesContent({
   getStyleLabel,
   onSaveToLibrary
 }: MobilePropertiesContentProps) {
+  const [productSets, setProductSets] = useState<any[]>([]);
+
+  useEffect(() => {
+    getProductSets().then(setProductSets).catch(err => console.error('Failed to load product sets', err));
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Page Header with Title and Navigation */}
@@ -1484,6 +1492,46 @@ export function MobilePropertiesContent({
                   </span>
                 </label>
               </div>
+
+              {currentPage.hasFeaturedProducts !== false && (
+                <div style={{ marginTop: '16px' }}>
+                  <label 
+                    className="block mb-2 font-['Inter:Medium',sans-serif]"
+                    style={{ fontSize: '13px', fontWeight: '600', color: '#9e9e9d', textTransform: 'uppercase' }}
+                  >
+                    Select Product Set
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={currentPage.productSetId || ''}
+                      onChange={(e) => {
+                        const newPages = [...pages];
+                        const page = { ...newPages[currentPageIndex] };
+                        page.productSetId = e.target.value;
+                        newPages[currentPageIndex] = page;
+                        setPages(newPages);
+                      }}
+                      className="w-full px-4 py-3 rounded-lg border appearance-none cursor-pointer font-['Inter:Medium',sans-serif]"
+                      style={{
+                        backgroundColor: '#2a2a2a',
+                        borderColor: '#3a3a3a',
+                        color: styles.textPrimary,
+                        fontSize: '15px'
+                      }}
+                    >
+                      <option value="">Select a product set...</option>
+                      {productSets.map(set => (
+                        <option key={set.id} value={set.id}>{set.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" 
+                      size={20} 
+                      style={{ color: '#9e9e9d' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

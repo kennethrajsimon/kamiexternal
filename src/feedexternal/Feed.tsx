@@ -25,7 +25,7 @@ import CoverThumbnailFeatureArticleBw from './imports/CoverThumbnailFeatureArtic
 import CoverThumbnailCreatorSpotlight from './imports/CoverThumbnailCreatorSpotlight';
 import CoverThumbnailAnnouncement1 from './imports/CoverThumbnailAnnouncement1';
 
-import { likePage, sharePage } from '../services/api';
+import { likePage, sharePage, getProductSets } from '../services/api';
 
 export interface SavedPage {
   id: string;
@@ -60,6 +60,7 @@ export interface SavedPage {
     selectedStyle: number;
   };
   hasFeaturedProducts?: boolean;
+  productSetId?: string;
   hasRecommendedReading?: boolean;
   efxMode?: 'none' | 'glitch' | 'blur' | 'chromatic' | 'shake' | 'distort';
 }
@@ -192,7 +193,8 @@ function FeedArticlePreview({
   likes,
   shares,
   onLike,
-  onShare
+  onShare,
+  productSets
 }: {
   page: SavedPage;
   meta?: {
@@ -205,6 +207,7 @@ function FeedArticlePreview({
   shares: number;
   onLike: () => void;
   onShare: () => void;
+  productSets: any[];
 }) {
   const copyShareLink = () => {
     onShare();
@@ -229,6 +232,11 @@ function FeedArticlePreview({
     }
   };
   const [scale, setScale] = useState(1);
+  const products = useMemo(() => {
+    if (!page.productSetId || !productSets) return undefined;
+    const set = productSets.find(s => s.id === page.productSetId);
+    return set?.products;
+  }, [page.productSetId, productSets]);
   const [mobileWidth, setMobileWidth] = useState<number | null>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -376,6 +384,8 @@ function FeedArticlePreview({
                 textAccent={styles.textAccent}
                 fontFamily={styles.fontFamily}
                 efx={renderPage.efx}
+                hasFeaturedProducts={page.hasFeaturedProducts}
+                productSetId={page.productSetId}
               />
             )}
           </div>
@@ -1058,7 +1068,7 @@ function FeedArticlePreview({
             className="w-full"
             style={{ backgroundColor: styles.background, paddingBottom: '8px' }}
           >
-            <ProductCarousel />
+            <ProductCarousel products={products} />
           </div>
         )}
       </div>
@@ -1190,7 +1200,7 @@ function FeedArticlePreview({
                     paddingBottom: isMobileOrTablet ? '0px' : '20px'
                   }}
                 >
-                  <ProductCarousel />
+                  <ProductCarousel products={products} />
                 </motion.div>
               </div>
             </div>
@@ -1209,6 +1219,11 @@ export default function FeedPage({
   savedPages: SavedPage[];
 }) {
   const isMobileOrTablet = useIsMobileOrTablet();
+  const [productSets, setProductSets] = useState<any[]>([]);
+
+  useEffect(() => {
+    getProductSets().then(setProductSets).catch(console.error);
+  }, []);
 
   const publishedPages = savedPages
     .filter(page => page.isPublished)
@@ -1440,20 +1455,10 @@ export default function FeedPage({
       >
         <div
           style={{
-            padding: isMobileOrTablet ? '20px' : '30px 60px'
+            padding: isMobileOrTablet ? '20px' : '10px 60px'
           }}
         >
-          <div
-            className="flex mb-[24px]"
-            style={{
-              flexDirection: isMobileOrTablet ? 'column' : 'row',
-              alignItems: isMobileOrTablet ? 'stretch' : 'center',
-              justifyContent: isMobileOrTablet ? 'flex-start' : 'space-between',
-              gap: isMobileOrTablet ? '16px' : undefined
-            }}
-          >
-            {/* Back button removed or optional for external feed */}
-          </div>
+          {/* Back button removed or optional for external feed */}
 
           <div
             className="flex"
@@ -1465,16 +1470,6 @@ export default function FeedPage({
             }}
           >
             <div>
-              <h1
-                className="font-bold mb-[8px]"
-                style={{
-                  color: '#f1f0eb',
-                  letterSpacing: '-0.02em',
-                  fontSize: '36px'
-                }}
-              >
-                Feed
-              </h1>
               <p className="text-[15px]" style={{ color: '#9e9e9d' }}>
                 {publishedPages.length} published {publishedPages.length === 1 ? 'article' : 'articles'}
               </p>
@@ -1543,6 +1538,7 @@ export default function FeedPage({
                     onLike={() => handleLike(page.id)}
                     onShare={() => handleShare(page.id)}
                     onCopyLink={() => showToast('Link copied to clipboard')}
+                    productSets={productSets}
                   />
                   <div className="flex justify-center w-full mt-6 mb-2">
                     <div className="flex items-center gap-2">

@@ -1,116 +1,227 @@
 'use client';
 
-import { useState } from 'react';
-import { ArrowLeft, Upload, Download, Plus, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Check, Edit2, FolderOpen, Save, Star, Trash2 } from 'lucide-react';
+import { deleteRecommendedArticleSet, getRecommendedArticleSets, saveRecommendedArticleSet, setActiveRecommendedArticleSet } from '../services/api';
+import CoverThumbnailFeatureArticleColour from '../imports/CoverThumbnailFeatureArticleColour';
+import CoverThumbnailFeatureArticleBw from '../imports/CoverThumbnailFeatureArticleBw';
+import CoverThumbnailCreatorSpotlight from '../imports/CoverThumbnailCreatorSpotlight';
+import CoverThumbnailAnnouncement1 from '../imports/CoverThumbnailAnnouncement1';
 
-interface Article {
+interface ArticleSet {
   id: string;
-  title: string;
-  category: string;
-  readTime: string;
-  image: string;
+  name: string;
+  articleIds: string[];
+  createdAt: string;
+  isActive?: boolean;
 }
+
+type SavedPage = any;
 
 interface RecommendedArticlesDashboardProps {
   onBackToLanding: () => void;
+  savedPages: SavedPage[];
 }
 
-export default function RecommendedArticlesDashboard({ onBackToLanding }: RecommendedArticlesDashboardProps) {
-  const [articles, setArticles] = useState<Article[]>([
-    {
-      id: '1',
-      title: 'The Evolution of Music Distribution',
-      category: 'INDUSTRY INSIGHTS',
-      readTime: '8 min read',
-      image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=280&fit=crop'
-    },
-    {
-      id: '2',
-      title: 'Live Performances in the Digital Age',
-      category: 'CREATOR SPOTLIGHT',
-      readTime: '6 min read',
-      image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=400&h=280&fit=crop'
-    },
-    {
-      id: '3',
-      title: 'Inside the Modern Recording Studio',
-      category: 'TECHNOLOGY',
-      readTime: '10 min read',
-      image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&h=280&fit=crop'
-    }
-  ]);
-
-  const handleTitleChange = (articleId: string, newTitle: string) => {
-    setArticles(prev => prev.map(a => 
-      a.id === articleId ? { ...a, title: newTitle } : a
-    ));
-  };
-
-  const handleCategoryChange = (articleId: string, newCategory: string) => {
-    setArticles(prev => prev.map(a => 
-      a.id === articleId ? { ...a, category: newCategory } : a
-    ));
-  };
-
-  const handleReadTimeChange = (articleId: string, newReadTime: string) => {
-    setArticles(prev => prev.map(a => 
-      a.id === articleId ? { ...a, readTime: newReadTime } : a
-    ));
-  };
-
-  const handleImageUpload = (articleId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setArticles(prev => prev.map(a => 
-          a.id === articleId ? { ...a, image: imageUrl } : a
-        ));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddArticle = () => {
-    const newArticle: Article = {
-      id: Date.now().toString(),
-      title: 'New Article Title',
-      category: 'CATEGORY',
-      readTime: '5 min read',
-      image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=280&fit=crop'
+function CoverPreview({ data }: { data: NonNullable<SavedPage['coverData']> }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(0.28);
+  useEffect(() => {
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const s = Math.min(w / 1512, h / 851);
+      setScale(s);
     };
-    setArticles(prev => [...prev, newArticle]);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(containerRef.current as HTMLDivElement);
+    return () => observer.disconnect();
+  }, [data.selectedStyle]);
+  return (
+    <div ref={containerRef} className="absolute inset-0">
+      <div style={{ width: '1512px', height: '851px', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        {data.selectedStyle === 2 ? (
+          <CoverThumbnailFeatureArticleBw
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            backgroundText={data.backgroundText}
+            backgroundTextColor={data.backgroundTextColor}
+            backgroundTextStyle={data.backgroundTextStyle}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundText={data.showBackgroundText}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : data.selectedStyle === 3 ? (
+          <CoverThumbnailCreatorSpotlight
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : data.selectedStyle === 4 ? (
+          <CoverThumbnailAnnouncement1
+            category={data.category}
+            title={data.title}
+            coverImage1={data.heroImage}
+            imageFit1={data.imageFit}
+            coverImage2={data.heroImage2}
+            imageFit2={data.imageFit2 || 'cover'}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : (
+          <CoverThumbnailFeatureArticleColour
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            backgroundText={data.backgroundText}
+            backgroundTextColor={data.backgroundTextColor}
+            backgroundTextStyle={data.backgroundTextStyle}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundText={data.showBackgroundText}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function RecommendedArticlesDashboard({ onBackToLanding, savedPages }: RecommendedArticlesDashboardProps) {
+  const [articleSets, setArticleSets] = useState<ArticleSet[]>([]);
+  const [currentSetName, setCurrentSetName] = useState('New Article Set');
+  const [currentSetId, setCurrentSetId] = useState<string | null>(null);
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hoveredSelected, setHoveredSelected] = useState<string | null>(null);
+
+  const publishedPages = useMemo(
+    () => savedPages.filter((page: any) => page.isPublished),
+    [savedPages]
+  );
+
+  const publishedById = useMemo(() => {
+    return new Map(publishedPages.map((page: any) => [page.id, page]));
+  }, [publishedPages]);
+
+  const loadArticleSets = useCallback(async () => {
+    try {
+      const sets = await getRecommendedArticleSets();
+      setArticleSets(sets);
+      if (!currentSetId) {
+        const activeSet = sets.find((set: ArticleSet) => set.isActive);
+        if (activeSet) {
+          setCurrentSetId(activeSet.id);
+          setCurrentSetName(activeSet.name);
+          setSelectedArticleIds(activeSet.articleIds || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load article sets', error);
+    }
+  }, [currentSetId]);
+
+  useEffect(() => {
+    loadArticleSets();
+  }, [loadArticleSets]);
+
+  const handleToggleArticle = (id: string) => {
+    setSelectedArticleIds(prev => (prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]));
   };
 
-  const handleDeleteArticle = (articleId: string) => {
-    if (articles.length > 1) {
-      setArticles(prev => prev.filter(a => a.id !== articleId));
+  const handleSaveSet = async () => {
+    if (!currentSetName.trim()) return;
+    setLoading(true);
+    const idToUse = currentSetId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+    try {
+      await saveRecommendedArticleSet({
+        id: idToUse,
+        name: currentSetName.trim(),
+        articleIds: selectedArticleIds,
+        createdAt: new Date().toISOString()
+      });
+      await loadArticleSets();
+      setCurrentSetId(idToUse);
+    } catch (error) {
+      console.error('Failed to save set', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleExport = () => {
-    const dataStr = JSON.stringify(articles, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'recommended-articles.json';
-    link.click();
+  const handleLoadSet = (set: ArticleSet) => {
+    setCurrentSetId(set.id);
+    setCurrentSetName(set.name);
+    setSelectedArticleIds(set.articleIds || []);
+  };
+
+  const handleDeleteSet = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteRecommendedArticleSet(id);
+      await loadArticleSets();
+      if (currentSetId === id) {
+        setCurrentSetId(null);
+        setCurrentSetName('New Article Set');
+        setSelectedArticleIds([]);
+      }
+    } catch (error) {
+      console.error('Failed to delete set', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetActive = async (set: ArticleSet) => {
+    setLoading(true);
+    try {
+      await setActiveRecommendedArticleSet(set.id);
+      await loadArticleSets();
+    } catch (error) {
+      console.error('Failed to set active set', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex"
       style={{
         backgroundColor: '#1a1a1a',
-        fontFamily: "'Inter', sans-serif"
+        fontFamily: 'Inter, sans-serif'
       }}
     >
-      {/* Left Side - Preview */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-[40px]">
-          {/* Header */}
           <div className="mb-[40px] flex items-center justify-between">
             <button
               onClick={onBackToLanding}
@@ -127,289 +238,259 @@ export default function RecommendedArticlesDashboard({ onBackToLanding }: Recomm
               Back to Dashboard
             </button>
 
-            <h1 
-              className="text-[32px] font-bold"
-              style={{ color: '#f1f0eb' }}
-            >
+            <h1 className="text-[32px] font-bold" style={{ color: '#f1f0eb' }}>
               RECOMMENDED ARTICLES
             </h1>
 
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-[12px] px-[20px] py-[12px] rounded-[8px] transition-all hover:opacity-80"
-              style={{
-                backgroundColor: '#11ff49',
-                color: '#1a1a1a',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}
-            >
-              <Download size={16} />
-              Export JSON
-            </button>
+            <div className="flex items-center gap-[12px]">
+              <button
+                onClick={handleSaveSet}
+                disabled={loading}
+                className="flex items-center gap-[12px] px-[20px] py-[12px] rounded-[8px] transition-all hover:opacity-80 disabled:opacity-50"
+                style={{
+                  backgroundColor: '#11ff49',
+                  color: '#1a1a1a',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                <Save size={16} />
+                Save Set
+              </button>
+            </div>
           </div>
 
-          {/* Preview */}
-          <div 
-            className="w-full py-[60px] px-[40px] rounded-[12px]"
-            style={{ backgroundColor: '#0d0d0d' }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-[32px]">
-              {articles.map((article) => (
-                <div
-                  key={article.id}
-                  className="group cursor-pointer"
-                >
-                  {/* Article Image */}
-                  <div className="w-full h-[280px] rounded-[12px] overflow-hidden mb-[20px] relative bg-[#1a1a1a] border border-[#2a2a2a]">
-                    <img 
-                      src={article.image} 
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    {/* Overlay on hover */}
-                    <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(17, 255, 73, 0.1)' }}
+          <div className="w-full rounded-[12px] border p-[24px]" style={{ backgroundColor: '#0d0d0d', borderColor: '#2a2a2a' }}>
+            <div className="text-[16px] font-semibold mb-[16px]" style={{ color: '#f1f0eb' }}>
+              Selected Articles
+            </div>
+            {selectedArticleIds.length === 0 ? (
+              <div className="text-[12px]" style={{ color: '#9e9e9d' }}>
+                Select articles from the right panel to build a set.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-[10px]">
+                {selectedArticleIds.map(id => {
+                  const page = publishedById.get(id);
+                  return (
+                    <div
+                      key={id}
+                      onMouseEnter={() => setHoveredSelected(id)}
+                      onMouseLeave={() => setHoveredSelected(null)}
+                      className="group relative"
                     >
-                      <span 
-                        className="text-[14px] font-semibold px-[24px] py-[12px] rounded-full"
-                        style={{ 
-                          backgroundColor: '#11ff49',
-                          color: '#1a1a1a'
+                      <div
+                        className="rounded-[8px] overflow-hidden border-2 transition-all"
+                        style={{
+                          backgroundColor: '#0d0d0d',
+                          borderColor: hoveredSelected === id ? '#11ff49' : '#2a2a2a',
+                          transform: hoveredSelected === id ? 'translateY(-4px)' : 'translateY(0)'
                         }}
                       >
-                        Read Article
-                      </span>
+                        <div
+                          className="w-full aspect-[1512/851] relative overflow-hidden"
+                          style={{ backgroundColor: '#1a1a1a' }}
+                        >
+                          {page?.coverData ? (
+                            <CoverPreview data={page.coverData} />
+                          ) : page?.coverImage ? (
+                            <div
+                              className="absolute inset-0"
+                              style={{
+                                backgroundImage: `url(${page.coverImage})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="text-[14px] font-semibold" style={{ color: '#3a3a3a' }}>
+                                No Preview
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-[10px]">
+                          <h3 className="text-[11px] font-bold mb-[4px] truncate" style={{ color: '#f1f0eb' }}>
+                            {page?.coverData?.title || page?.name || 'Untitled'}
+                          </h3>
+                          <div className="text-[10px]" style={{ color: '#9e9e9d' }}>
+                            {page?.coverData?.category || 'PUBLISHED'}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Article Info */}
-                  <div>
-                    <div className="flex items-center gap-[12px] mb-[12px]">
-                      <span 
-                        className="text-[11px] font-bold tracking-wider"
-                        style={{ color: '#a79755' }}
-                      >
-                        {article.category}
-                      </span>
-                      <span 
-                        className="text-[11px]"
-                        style={{ color: '#9e9e9d' }}
-                      >
-                        •
-                      </span>
-                      <span 
-                        className="text-[11px]"
-                        style={{ color: '#9e9e9d' }}
-                      >
-                        {article.readTime}
-                      </span>
-                    </div>
-                    <h3 
-                      className="text-[22px] font-bold transition-colors group-hover:text-[#11ff49]"
-                      style={{ color: '#f1f0eb' }}
-                    >
-                      {article.title}
-                    </h3>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Right Side - Properties Panel */}
-      <div 
-        className="w-[400px] overflow-y-auto border-l"
-        style={{
-          backgroundColor: '#0d0d0d',
-          borderColor: '#2a2a2a'
-        }}
-      >
+      <div className="w-[420px] overflow-y-auto border-l" style={{ backgroundColor: '#0d0d0d', borderColor: '#2a2a2a' }}>
         <div className="p-[30px]">
-          {/* Panel Header */}
-          <div className="mb-[30px]">
-            <h2 
-              className="text-[18px] font-bold mb-[8px]"
-              style={{ color: '#f1f0eb' }}
-            >
-              Article Properties
+          <div className="mb-[24px]">
+            <h2 className="text-[18px] font-bold mb-[8px]" style={{ color: '#f1f0eb' }}>
+              Article Sets
             </h2>
-            <p
-              className="text-[13px]"
-              style={{ color: '#9e9e9d' }}
-            >
-              Edit article details
+            <p className="text-[12px]" style={{ color: '#9e9e9d' }}>
+              Build sets from published articles.
             </p>
           </div>
 
-          {/* Add Article Button */}
-          <button
-            onClick={handleAddArticle}
-            className="w-full flex items-center justify-center gap-[8px] py-[12px] px-[16px] rounded-[8px] mb-[30px] transition-all hover:opacity-80"
-            style={{
-              backgroundColor: '#11ff49',
-              color: '#1a1a1a',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}
-          >
-            <Plus size={16} />
-            Add Article
-          </button>
+          <div className="mb-[20px]">
+            <label className="block text-[11px] font-semibold mb-[6px]" style={{ color: '#f1f0eb' }}>
+              Set Name
+            </label>
+            <input
+              type="text"
+              value={currentSetName}
+              onChange={(e) => setCurrentSetName(e.target.value)}
+              className="w-full px-[10px] py-[8px] rounded-[6px] text-[12px] outline-none"
+              style={{
+                backgroundColor: '#2a2a2a',
+                color: '#f1f0eb',
+                border: '1px solid #3a3a3a'
+              }}
+            />
+          </div>
 
-          {/* Articles List */}
-          <div className="space-y-[30px]">
-            {articles.map((article, index) => (
-              <div 
-                key={article.id}
-                className="pb-[30px] border-b"
-                style={{ borderColor: '#2a2a2a' }}
-              >
-                {/* Article Header */}
-                <div className="flex items-center justify-between mb-[16px]">
-                  <h3 
-                    className="text-[14px] font-bold"
-                    style={{ color: '#11ff49' }}
-                  >
-                    Article {index + 1}
-                  </h3>
-                  {articles.length > 1 && (
-                    <button
-                      onClick={() => handleDeleteArticle(article.id)}
-                      className="p-[6px] rounded-[4px] transition-all hover:bg-[#2a2a2a]"
-                      style={{ color: '#9e9e9d' }}
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
+          <div className="mb-[24px] flex gap-[10px]">
+            <button
+              onClick={handleSaveSet}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-[8px] py-[10px] rounded-[8px] transition-all hover:opacity-80 disabled:opacity-50"
+              style={{
+                backgroundColor: '#11ff49',
+                color: '#1a1a1a',
+                fontSize: '12px',
+                fontWeight: '600'
+              }}
+            >
+              <Save size={14} />
+              Save
+            </button>
+            <button
+              onClick={() => {
+                setCurrentSetId(null);
+                setCurrentSetName('New Article Set');
+                setSelectedArticleIds([]);
+              }}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-[8px] py-[10px] rounded-[8px] transition-all hover:opacity-80 disabled:opacity-50"
+              style={{
+                backgroundColor: '#2a2a2a',
+                color: '#f1f0eb',
+                fontSize: '12px',
+                fontWeight: '600'
+              }}
+            >
+              <FolderOpen size={14} />
+              New
+            </button>
+          </div>
 
-                {/* Image Preview */}
-                <div 
-                  className="w-full h-[150px] rounded-[8px] overflow-hidden mb-[12px]"
-                  style={{
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid #2a2a2a'
-                  }}
-                >
-                  <img 
-                    src={article.image} 
-                    alt={article.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Upload Button */}
-                <label 
-                  className="flex items-center justify-center gap-[8px] w-full py-[10px] px-[12px] rounded-[6px] mb-[12px] cursor-pointer transition-all hover:opacity-80"
-                  style={{
-                    backgroundColor: '#3a3a3a',
-                    color: '#f1f0eb',
-                    fontSize: '13px',
-                    fontWeight: '600'
-                  }}
-                >
-                  <Upload size={14} />
-                  Upload Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(article.id, e)}
-                    className="hidden"
-                  />
-                </label>
-
-                {/* Title Input */}
-                <div className="mb-[12px]">
-                  <label 
-                    className="block mb-[8px]"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#9e9e9d'
-                    }}
-                  >
-                    Title
-                  </label>
-                  <textarea
-                    value={article.title}
-                    onChange={(e) => handleTitleChange(article.id, e.target.value)}
-                    className="w-full px-[12px] py-[10px] rounded-[6px] border resize-none"
-                    rows={2}
-                    style={{
-                      backgroundColor: '#1a1a1a',
-                      borderColor: '#3a3a3a',
-                      color: '#f1f0eb',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      outline: 'none'
-                    }}
-                    placeholder="Article Title"
-                  />
-                </div>
-
-                {/* Category Input */}
-                <div className="mb-[12px]">
-                  <label 
-                    className="block mb-[8px]"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#9e9e9d'
-                    }}
-                  >
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    value={article.category}
-                    onChange={(e) => handleCategoryChange(article.id, e.target.value.toUpperCase())}
-                    className="w-full px-[12px] py-[10px] rounded-[6px] border"
-                    style={{
-                      backgroundColor: '#1a1a1a',
-                      borderColor: '#3a3a3a',
-                      color: '#a79755',
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      outline: 'none'
-                    }}
-                    placeholder="CATEGORY"
-                  />
-                </div>
-
-                {/* Read Time Input */}
-                <div>
-                  <label 
-                    className="block mb-[8px]"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#9e9e9d'
-                    }}
-                  >
-                    Read Time
-                  </label>
-                  <input
-                    type="text"
-                    value={article.readTime}
-                    onChange={(e) => handleReadTimeChange(article.id, e.target.value)}
-                    className="w-full px-[12px] py-[10px] rounded-[6px] border"
-                    style={{
-                      backgroundColor: '#1a1a1a',
-                      borderColor: '#3a3a3a',
-                      color: '#9e9e9d',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      outline: 'none'
-                    }}
-                    placeholder="5 min read"
-                  />
-                </div>
+          <div className="mb-[24px]">
+            <div className="text-[12px] font-semibold mb-[10px]" style={{ color: '#f1f0eb' }}>
+              Saved Sets
+            </div>
+            {articleSets.length === 0 ? (
+              <div className="text-[11px]" style={{ color: '#9e9e9d' }}>
+                No saved sets yet.
               </div>
-            ))}
+            ) : (
+              <div className="space-y-[10px]">
+                {articleSets.map((set) => (
+                  <div key={set.id} className="rounded-[8px] border px-[10px] py-[8px]" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
+                    <div className="flex items-center justify-between gap-[8px]">
+                      <button
+                        onClick={() => handleLoadSet(set)}
+                        className="flex-1 text-left text-[12px] font-semibold"
+                        style={{ color: '#f1f0eb' }}
+                      >
+                        {set.name}
+                      </button>
+                      {set.isActive ? (
+                        <div className="flex items-center gap-[4px] text-[10px] font-semibold" style={{ color: '#11ff49' }}>
+                          <Star size={12} />
+                          Active
+                        </div>
+                      ) : null}
+                      <button
+                        onClick={() => handleDeleteSet(set.id)}
+                        disabled={loading}
+                        className="p-[4px] rounded-full transition-all hover:bg-[#2a2a2a] disabled:opacity-50"
+                        style={{ color: '#9e9e9d' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="mt-[8px] flex items-center gap-[8px]">
+                      <button
+                        onClick={() => handleSetActive(set)}
+                        disabled={loading || set.isActive}
+                        className="flex items-center gap-[6px] px-[10px] py-[6px] rounded-[6px] text-[10px] font-semibold transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{
+                          backgroundColor: set.isActive ? '#2a2a2a' : '#11ff49',
+                          color: set.isActive ? '#9e9e9d' : '#1a1a1a'
+                        }}
+                      >
+                        {set.isActive ? <Check size={12} /> : <Star size={12} />}
+                        {set.isActive ? 'Active' : 'Set Active'}
+                      </button>
+                      <button
+                        onClick={() => handleLoadSet(set)}
+                        disabled={loading}
+                        className="flex items-center gap-[6px] px-[10px] py-[6px] rounded-[6px] text-[10px] font-semibold transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{
+                          backgroundColor: '#2a2a2a',
+                          color: '#f1f0eb'
+                        }}
+                      >
+                        <Edit2 size={12} />
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="text-[12px] font-semibold mb-[10px]" style={{ color: '#f1f0eb' }}>
+              Published Articles
+            </div>
+            <div className="space-y-[10px]">
+              {publishedPages.map((page: any) => {
+                const isSelected = selectedArticleIds.includes(page.id);
+                return (
+                  <button
+                    key={page.id}
+                    onClick={() => handleToggleArticle(page.id)}
+                    className="w-full flex items-center justify-between gap-[10px] rounded-[8px] border px-[10px] py-[8px] transition-all"
+                    style={{
+                      borderColor: isSelected ? '#11ff49' : '#2a2a2a',
+                      backgroundColor: isSelected ? 'rgba(17, 255, 73, 0.08)' : '#1a1a1a',
+                      color: '#f1f0eb'
+                    }}
+                  >
+                    <div className="text-left">
+                      <div className="text-[12px] font-semibold">
+                        {page.coverData?.title || page.name || 'Untitled'}
+                      </div>
+                      <div className="text-[10px]" style={{ color: '#9e9e9d' }}>
+                        {page.coverData?.category || 'PUBLISHED'}
+                      </div>
+                    </div>
+                    <div className="text-[11px]" style={{ color: isSelected ? '#11ff49' : '#9e9e9d' }}>
+                      {isSelected ? 'Added' : 'Add'}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

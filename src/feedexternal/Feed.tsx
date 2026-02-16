@@ -25,7 +25,7 @@ import CoverThumbnailFeatureArticleBw from './imports/CoverThumbnailFeatureArtic
 import CoverThumbnailCreatorSpotlight from './imports/CoverThumbnailCreatorSpotlight';
 import CoverThumbnailAnnouncement1 from './imports/CoverThumbnailAnnouncement1';
 
-import { likePage, sharePage, getProductSets } from '../services/api';
+import { likePage, sharePage, getProductSets, getRecommendedArticleSets } from '../services/api';
 
 export interface SavedPage {
   id: string;
@@ -1236,23 +1236,35 @@ export default function FeedPage({
 }) {
   const isMobileOrTablet = useIsMobileOrTablet();
   const [productSets, setProductSets] = useState<any[]>([]);
+  const [recommendedArticleSets, setRecommendedArticleSets] = useState<any[]>([]);
 
   useEffect(() => {
     getProductSets().then(setProductSets).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    getRecommendedArticleSets().then(setRecommendedArticleSets).catch(console.error);
   }, []);
 
   const publishedPages = savedPages
     .filter(page => page.isPublished)
     .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
   const recommendedArticles = useMemo(() => {
-    return publishedPages.map((page) => ({
+    const publishedById = new Map(publishedPages.map((page) => [page.id, page]));
+    const activeSet = recommendedArticleSets.find((set) => set?.isActive) || recommendedArticleSets[0];
+    const idsFromSet = Array.isArray(activeSet?.articleIds) ? activeSet.articleIds : [];
+    const pagesFromSet = idsFromSet
+      .map((id: string) => publishedById.get(id))
+      .filter(Boolean) as SavedPage[];
+    const source = pagesFromSet.length > 0 ? pagesFromSet : publishedPages;
+    return source.map((page) => ({
       id: page.id,
       title: page.coverData?.title || page.name || 'Untitled',
       category: page.coverData?.category || 'UNCATEGORIZED',
       coverData: page.coverData || null,
       coverImage: page.coverImage || null
     }));
-  }, [publishedPages]);
+  }, [publishedPages, recommendedArticleSets]);
   const handleRecommendedSelect = (id: string) => {
     if (!id) return;
     const idx = publishedPages.findIndex((page) => page.id === id);
@@ -1647,7 +1659,8 @@ export default function FeedPage({
               backgroundColor: 'rgba(42, 42, 42, 0.95)',
               border: '1px solid #3a3a3a',
               color: '#f1f0eb',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
+              boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+              textAlign: 'center'
             }}
           >
             {toastMessage}

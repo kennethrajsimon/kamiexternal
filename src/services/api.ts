@@ -79,3 +79,31 @@ export async function deleteProductSet(id: string) {
   if (!res.ok) throw new Error('Failed to delete product set');
   return res.json();
 }
+
+export async function getRecommendedArticleSets() {
+  const res = await fetch(`${apiBase}/api/recommended-article-sets`);
+  if (!res.ok) throw new Error('Failed to fetch recommended article sets');
+  return res.json();
+}
+
+export async function saveRecommendedArticleSet(payload: any) {
+  const res = await fetch(`${apiBase}/api/recommended-article-sets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to save recommended article set');
+  return res.json();
+}
+
+export async function deleteRecommendedArticleSet(id: string) {
+  const res = await fetch(`${apiBase}/api/recommended-article-sets/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete recommended article set');
+  return res.json();
+}
+
+export async function setActiveRecommendedArticleSet(id: string) {
+  const res = await fetch(`${apiBase}/api/recommended-article-sets/${id}/active`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to set active recommended article set');
+  return res.json();
+}

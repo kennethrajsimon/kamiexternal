@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobileOrTablet } from '../hooks/useMediaQuery';
 
@@ -66,6 +66,17 @@ const ARTICLES: Article[] = [
 export function RecommendedArticles() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    const threshold = 2;
+    setCanScrollLeft(el.scrollLeft > threshold);
+    setCanScrollRight(el.scrollLeft < maxScrollLeft - threshold);
+  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -74,8 +85,13 @@ export function RecommendedArticles() {
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
+      setTimeout(updateScrollState, 180);
     }
   };
+
+  useEffect(() => {
+    updateScrollState();
+  }, [isMobileOrTablet]);
 
   // Mobile vertical layout
   if (isMobileOrTablet) {
@@ -105,6 +121,7 @@ export function RecommendedArticles() {
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none'
               }}
+              onScroll={updateScrollState}
             >
               {ARTICLES.map((article) => (
                 <div
@@ -174,28 +191,32 @@ export function RecommendedArticles() {
             </div>
 
             {/* Left Arrow */}
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ 
-                backgroundColor: '#2a2a2a',
-                border: '1px solid #3a3a3a'
-              }}
-            >
-              <ChevronLeft size={16} color="#f1f0eb" />
-            </button>
+            {canScrollLeft ? (
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+                style={{ 
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #3a3a3a'
+                }}
+              >
+                <ChevronLeft size={16} color="#f1f0eb" />
+              </button>
+            ) : null}
 
             {/* Right Arrow */}
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ 
-                backgroundColor: '#2a2a2a',
-                border: '1px solid #3a3a3a'
-              }}
-            >
-              <ChevronRight size={16} color="#f1f0eb" />
-            </button>
+            {canScrollRight ? (
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+                style={{ 
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #3a3a3a'
+                }}
+              >
+                <ChevronRight size={16} color="#f1f0eb" />
+              </button>
+            ) : null}
           </div>
 
           {/* Back to Landing Button */}
@@ -229,6 +250,7 @@ export function RecommendedArticles() {
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
           }}
+          onScroll={updateScrollState}
         >
           {ARTICLES.map((article) => (
             <div
@@ -296,27 +318,31 @@ export function RecommendedArticles() {
         </div>
 
         {/* Navigation Arrows - Hidden on Mobile, Visible on Desktop */}
-        <button
-          onClick={() => scroll('left')}
-          className="hidden md:flex absolute left-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
-          style={{ 
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #3a3a3a'
-          }}
-        >
-          <ChevronLeft size={18} color="#f1f0eb" />
-        </button>
+        {canScrollLeft ? (
+          <button
+            onClick={() => scroll('left')}
+            className="hidden md:flex absolute left-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
+            style={{ 
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #3a3a3a'
+            }}
+          >
+            <ChevronLeft size={18} color="#f1f0eb" />
+          </button>
+        ) : null}
 
-        <button
-          onClick={() => scroll('right')}
-          className="hidden md:flex absolute right-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
-          style={{ 
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #3a3a3a'
-          }}
-        >
-          <ChevronRight size={18} color="#f1f0eb" />
-        </button>
+        {canScrollRight ? (
+          <button
+            onClick={() => scroll('right')}
+            className="hidden md:flex absolute right-[-15px] top-[140px] -translate-y-1/2 z-10 w-[36px] h-[36px] rounded-full items-center justify-center transition-all hover:scale-110"
+            style={{ 
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #3a3a3a'
+            }}
+          >
+            <ChevronRight size={18} color="#f1f0eb" />
+          </button>
+        ) : null}
       </div>
 
       {/* Back to Landing Button */}

@@ -81,6 +81,27 @@ db.prepare(`
   )
 `).run();
 
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS recommended_article_sets (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    article_ids_json TEXT,
+    created_at TEXT,
+    is_active INTEGER DEFAULT 0
+  )
+`).run();
+
+const existingRecommendedColumns = db
+  .prepare(`PRAGMA table_info(recommended_article_sets)`)
+  .all()
+  .map((c) => c.name);
+const addRecommendedColumnIfMissing = (name, type) => {
+  if (!existingRecommendedColumns.includes(name)) {
+    db.prepare(`ALTER TABLE recommended_article_sets ADD COLUMN ${name} ${type}`).run();
+  }
+};
+addRecommendedColumnIfMissing('is_active', 'INTEGER DEFAULT 0');
+
 app.get('/api/product-sets', (req, res) => {
   const rows = db.prepare('SELECT * FROM product_sets ORDER BY created_at DESC').all();
   const sets = rows.map(r => ({
@@ -119,6 +140,58 @@ app.post('/api/product-sets', (req, res) => {
 app.delete('/api/product-sets/:id', (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM product_sets WHERE id = ?').run(id);
+  res.json({ success: true });
+});
+
+app.get('/api/recommended-article-sets', (req, res) => {
+  const rows = db.prepare('SELECT * FROM recommended_article_sets ORDER BY created_at DESC').all();
+  const sets = rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    articleIds: r.article_ids_json ? JSON.parse(r.article_ids_json) : [],
+    createdAt: r.created_at,
+    isActive: !!r.is_active
+  }));
+  res.json(sets);
+});
+
+app.post('/api/recommended-article-sets', (req, res) => {
+  const { id, name, articleIds, createdAt, isActive } = req.body;
+  const existing = db.prepare('SELECT id FROM recommended_article_sets WHERE id = ?').get(id);
+  if (isActive) {
+    db.prepare('UPDATE recommended_article_sets SET is_active = 0').run();
+  }
+  if (existing) {
+    const stmt = db.prepare(`
+      UPDATE recommended_article_sets
+      SET name = ?, article_ids_json = ?, is_active = ?
+      WHERE id = ?
+    `);
+    stmt.run(name, JSON.stringify(articleIds || []), isActive ? 1 : 0, id);
+  } else {
+    const stmt = db.prepare(`
+      INSERT INTO recommended_article_sets (id, name, article_ids_json, created_at, is_active)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    stmt.run(id, name, JSON.stringify(articleIds || []), createdAt || new Date().toISOString(), isActive ? 1 : 0);
+  }
+  res.json({ success: true, id });
+});
+
+app.post('/api/recommended-article-sets/:id/active', (req, res) => {
+  const { id } = req.params;
+  const existing = db.prepare('SELECT id FROM recommended_article_sets WHERE id = ?').get(id);
+  if (!existing) {
+    return res.status(404).json({ error: 'Set not found' });
+  }
+  db.prepare('UPDATE recommended_article_sets SET is_active = 0').run();
+  db.prepare('UPDATE recommended_article_sets SET is_active = 1 WHERE id = ?').run(id);
+  res.json({ success: true, id });
+});
+
+app.delete('/api/recommended-article-sets/:id', (req, res) => {
+  const { id } = req.params;
+  db.prepare('DELETE FROM recommended_article_sets WHERE id = ?').run(id);
   res.json({ success: true });
 });
 

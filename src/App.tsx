@@ -232,6 +232,7 @@ export default function App() {
     return (
       <RecommendedArticlesDashboard
         onBackToLanding={handleBackToLanding}
+        savedPages={savedPages}
       />
     );
   }

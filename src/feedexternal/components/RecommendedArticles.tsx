@@ -146,16 +146,35 @@ export function RecommendedArticles({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    const threshold = 2;
+    setCanScrollLeft(el.scrollLeft > threshold);
+    setCanScrollRight(el.scrollLeft < maxScrollLeft - threshold);
+  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = isMobileOrTablet ? 245 : 400; // Mobile: 233px width + 12px gap, Desktop: ~400px
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
+      const maxScrollLeft = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+      const delta = direction === 'left' ? -scrollAmount : scrollAmount;
+      const nextScrollLeft = Math.min(Math.max(scrollRef.current.scrollLeft + delta, 0), maxScrollLeft);
+      scrollRef.current.scrollTo({
+        left: nextScrollLeft,
         behavior: 'smooth'
       });
+      setTimeout(updateScrollState, 180);
     }
   };
+
+  useEffect(() => {
+    updateScrollState();
+  }, [isMobileOrTablet, articles.length]);
 
   // Mobile vertical layout
   if (isMobileOrTablet) {
@@ -191,6 +210,7 @@ export function RecommendedArticles({
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none'
               }}
+              onScroll={updateScrollState}
             >
               {articles.map((article) => (
                 <div
@@ -255,28 +275,32 @@ export function RecommendedArticles({
             </div>
 
             {/* Left Arrow */}
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ 
-                backgroundColor: '#2a2a2a',
-                border: '1px solid #3a3a3a'
-              }}
-            >
-              <ChevronLeft size={16} color="#f1f0eb" />
-            </button>
+            {canScrollLeft ? (
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+                style={{ 
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #3a3a3a'
+                }}
+              >
+                <ChevronLeft size={16} color="#f1f0eb" />
+              </button>
+            ) : null}
 
             {/* Right Arrow */}
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ 
-                backgroundColor: '#2a2a2a',
-                border: '1px solid #3a3a3a'
-              }}
-            >
-              <ChevronRight size={16} color="#f1f0eb" />
-            </button>
+            {canScrollRight ? (
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-[-10px] top-[90px] -translate-y-1/2 z-10 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all active:scale-95"
+                style={{ 
+                  backgroundColor: '#2a2a2a',
+                  border: '1px solid #3a3a3a'
+                }}
+              >
+                <ChevronRight size={16} color="#f1f0eb" />
+              </button>
+            ) : null}
           </div>
 
         </div>
@@ -298,7 +322,7 @@ export function RecommendedArticles({
         {/* Horizontal Scroll Container */}
         <div 
           ref={scrollRef}
-          className="flex md:grid md:grid-cols-3 gap-[24px] md:gap-[32px] overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide pb-[20px]"
+          className="flex gap-[24px] md:gap-[32px] overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-[20px]"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
@@ -307,14 +331,15 @@ export function RecommendedArticles({
           {articles.map((article) => (
             <div
               key={article.id}
-              className="flex-shrink-0 w-[364px] md:w-auto group cursor-pointer snap-start"
+              className="flex-shrink-0 w-[364px] group cursor-pointer snap-start flex flex-col"
+              style={{ width: '364px', minWidth: '364px', maxWidth: '364px', flex: '0 0 364px' }}
               onClick={() => onArticleSelect?.(article.id)}
             >
               {/* Article Image */}
               <div 
                 className="w-full rounded-[3px] overflow-hidden mb-[20px] relative bg-[#1a1a1a] border transition-all duration-500"
                 style={{
-                  aspectRatio: '1512 / 851',
+                  height: '205px',
                   borderColor: '#2a2a2a'
                 }}
               >
@@ -347,7 +372,7 @@ export function RecommendedArticles({
               </div>
 
               {/* Article Info */}
-              <div>
+              <div style={{ height: '86px' }}>
                 <span 
                   className="text-[11px] font-bold tracking-wider uppercase"
                   style={{ color: '#a79755' }}
@@ -356,7 +381,15 @@ export function RecommendedArticles({
                 </span>
                 <h3 
                   className="text-[22px] font-bold transition-colors group-hover:text-[#11ff49]"
-                  style={{ color: '#f1f0eb' }}
+                  style={{
+                    color: '#f1f0eb',
+                    lineHeight: '28px',
+                    height: '56px',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
                 >
                   {article.title}
                 </h3>

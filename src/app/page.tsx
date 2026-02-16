@@ -246,6 +246,7 @@ export default function Home() {
     return (
       <RecommendedArticlesDashboard
         onBackToLanding={handleBackToLanding}
+        savedPages={savedPages}
       />
     );
   }

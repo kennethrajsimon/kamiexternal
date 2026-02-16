@@ -1236,6 +1236,31 @@ export default function FeedPage({
   const publishedPages = savedPages
     .filter(page => page.isPublished)
     .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+  const recommendedArticles = useMemo(() => {
+    return publishedPages.map((page) => ({
+      id: page.id,
+      title: page.coverData?.title || page.name || 'Untitled',
+      category: page.coverData?.category || 'UNCATEGORIZED',
+      coverData: page.coverData || null,
+      coverImage: page.coverImage || null
+    }));
+  }, [publishedPages]);
+  const handleRecommendedSelect = (id: string) => {
+    if (!id) return;
+    const idx = publishedPages.findIndex((page) => page.id === id);
+    if (idx !== -1 && visibleCount < idx + 1) {
+      setVisibleCount(idx + 1);
+    }
+    const nextHash = `#article-${id}`;
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+      return;
+    }
+    const el = document.getElementById(`article-${id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const [pageStats, setPageStats] = useState<Record<string, { likes: number; shares: number }>>({});
 
@@ -1552,7 +1577,7 @@ export default function FeedPage({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => copyShareLink(page.id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
+                        className="flex items-center gap-2 px-4 h-[36px] text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
                         style={{ color: '#6e6e6e', border: '1px solid #6e6e6e' }}
                         title="Copy article link"
                         aria-label="Copy article link"
@@ -1564,7 +1589,7 @@ export default function FeedPage({
                           const el = document.getElementById(`article-${page.id}`);
                           el?.scrollIntoView({ behavior: 'smooth' });
                         }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
+                        className="flex items-center gap-2 px-4 h-[36px] text-sm transition-colors rounded-full hover:bg-[#2a2a2a]"
                         style={{ color: '#6e6e6e', border: '1px solid #6e6e6e' }}
                       >
                         <ArrowUp size={16} />
@@ -1593,7 +1618,10 @@ export default function FeedPage({
         }}
       >
         <div style={{ maxWidth: '1512px', margin: '0 auto' }}>
-          <RecommendedArticles />
+          <RecommendedArticles
+            articles={recommendedArticles}
+            onArticleSelect={handleRecommendedSelect}
+          />
         </div>
       </div>
       {toastMessage && (

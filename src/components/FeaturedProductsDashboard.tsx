@@ -11,6 +11,7 @@ interface Product {
   price: string;
   image: string;
   creator?: string;
+  collectionId?: string;
 }
 
 interface ProductSet {
@@ -25,6 +26,7 @@ interface KamiProduct {
   name: string;
   price: number;
   metadata: string; // JSON string containing image
+  collectionId?: number;
   creator?: {
     username: string;
     avatarUrl: string;
@@ -143,7 +145,8 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
       name: kProduct.name,
       price: `$${kProduct.price.toFixed(2)}`,
       image: imageUrl || 'https://via.placeholder.com/400',
-      creator: kProduct.creator?.username
+      creator: kProduct.creator?.username,
+      collectionId: kProduct.collectionId != null ? String(kProduct.collectionId) : ''
     };
 
     setProducts(prev => [...prev, newProduct]);
@@ -176,6 +179,12 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
     ));
   };
 
+  const handleCollectionIdChange = (productId: string, newCollectionId: string) => {
+    setProducts(prev => prev.map(p =>
+      p.id === productId ? { ...p, collectionId: newCollectionId } : p
+    ));
+  };
+
   const handleDeleteProduct = (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
@@ -186,7 +195,8 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
       id: newId,
       name: 'New Product',
       price: '$0.00',
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+      collectionId: ''
     }]);
   };
 
@@ -472,6 +482,35 @@ export default function FeaturedProductsDashboard({ onBackToLanding }: FeaturedP
                       outline: 'none'
                     }}
                     placeholder="Product Name"
+                  />
+                </div>
+
+                {/* Collection ID Input */}
+                <div className="mb-[12px]">
+                  <label 
+                    className="block mb-[8px]"
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#9e9e9d'
+                    }}
+                  >
+                    Collection ID
+                  </label>
+                  <input
+                    type="text"
+                    value={product.collectionId || ''}
+                    onChange={(e) => handleCollectionIdChange(product.id, e.target.value)}
+                    className="w-full px-[12px] py-[10px] rounded-[6px] border"
+                    style={{
+                      backgroundColor: '#1a1a1a',
+                      borderColor: '#3a3a3a',
+                      color: '#f1f0eb',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      outline: 'none'
+                    }}
+                    placeholder="Enter collection id"
                   />
                 </div>
 

@@ -1,75 +1,155 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobileOrTablet } from '../hooks/useMediaQuery';
+import CoverThumbnailFeatureArticleColour from '../imports/CoverThumbnailFeatureArticleColour';
+import CoverThumbnailFeatureArticleBw from '../imports/CoverThumbnailFeatureArticleBw';
+import CoverThumbnailCreatorSpotlight from '../imports/CoverThumbnailCreatorSpotlight';
+import CoverThumbnailAnnouncement1 from '../imports/CoverThumbnailAnnouncement1';
+
+interface CoverData {
+  id: string;
+  title: string;
+  category: string;
+  backgroundText: string;
+  backgroundColor: string;
+  backgroundTextColor: string;
+  backgroundImage: string | null;
+  backgroundImageFit: 'cover' | 'contain';
+  imageFit: 'cover' | 'contain';
+  imageFit2?: 'cover' | 'contain';
+  heroImage: string | null;
+  heroImage2: string | null;
+  showHeroImage: boolean;
+  showBackgroundText: boolean;
+  showBackgroundColor: boolean;
+  backgroundTextStyle: 'fill' | 'stroke';
+  selectedStyle: number;
+}
 
 interface Article {
   id: string;
   title: string;
   category: string;
-  readTime: string;
-  icon: React.ReactNode;
+  coverData?: CoverData | null;
+  coverImage?: string | null;
 }
 
-const ARTICLES: Article[] = [
-  {
-    id: '1',
-    title: 'The Evolution of Music Distribution',
-    category: 'INDUSTRY INSIGHTS',
-    readTime: '8 min read',
-    icon: (
-      <svg viewBox="0 0 400 280" className="w-full h-full">
-        <rect width="400" height="280" fill="#1a1a1a"/>
-        <circle cx="200" cy="140" r="80" fill="none" stroke="#11ff49" strokeWidth="3"/>
-        <circle cx="200" cy="140" r="60" fill="none" stroke="#11ff49" strokeWidth="2" opacity="0.6"/>
-        <circle cx="200" cy="140" r="40" fill="none" stroke="#11ff49" strokeWidth="2" opacity="0.4"/>
-        <path d="M200 60 L200 220 M120 140 L280 140" stroke="#a79755" strokeWidth="2"/>
-        <circle cx="200" cy="140" r="8" fill="#11ff49"/>
-      </svg>
-    )
-  },
-  {
-    id: '2',
-    title: 'Live Performances in the Digital Age',
-    category: 'CREATOR SPOTLIGHT',
-    readTime: '6 min read',
-    icon: (
-      <svg viewBox="0 0 400 280" className="w-full h-full">
-        <rect width="400" height="280" fill="#1a1a1a"/>
-        <rect x="80" y="60" width="240" height="160" rx="8" fill="none" stroke="#11ff49" strokeWidth="3"/>
-        <path d="M100 180 L140 120 L180 150 L220 100 L260 140 L300 90" fill="none" stroke="#a79755" strokeWidth="4" strokeLinecap="round"/>
-        <circle cx="200" cy="140" r="30" fill="#11ff49" opacity="0.2"/>
-        <path d="M190 130 L190 150 L210 140 Z" fill="#11ff49"/>
-      </svg>
-    )
-  },
-  {
-    id: '3',
-    title: 'Inside the Modern Recording Studio',
-    category: 'TECHNOLOGY',
-    readTime: '10 min read',
-    icon: (
-      <svg viewBox="0 0 400 280" className="w-full h-full">
-        <rect width="400" height="280" fill="#1a1a1a"/>
-        <rect x="60" y="80" width="100" height="120" rx="6" fill="#2a2a2a" stroke="#11ff49" strokeWidth="2"/>
-        <rect x="180" y="60" width="100" height="140" rx="6" fill="#2a2a2a" stroke="#11ff49" strokeWidth="2"/>
-        <rect x="300" y="100" width="40" height="100" rx="4" fill="#2a2a2a" stroke="#a79755" strokeWidth="2"/>
-        <rect x="70" y="90" width="80" height="8" fill="#11ff49"/>
-        <rect x="70" y="110" width="60" height="8" fill="#11ff49" opacity="0.6"/>
-        <rect x="70" y="130" width="70" height="8" fill="#11ff49" opacity="0.4"/>
-      </svg>
-    )
-  }
-];
+function CoverComposite({ data }: { data: CoverData }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(0.28);
 
-export function RecommendedArticles() {
+  useEffect(() => {
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const scaleX = w / 1512;
+      const scaleY = h / 851;
+      const s = Math.max(scaleX, scaleY);
+
+      setScale(s);
+    };
+    update();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', update);
+      return () => window.removeEventListener('resize', update);
+    }
+    const observer = new ResizeObserver(update);
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden flex items-center justify-center">
+      <div style={{ width: '1512px', height: '851px', transform: `scale(${scale})`, transformOrigin: 'center center', flexShrink: 0 }}>
+        {data.selectedStyle === 2 ? (
+          <CoverThumbnailFeatureArticleBw
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            backgroundText={data.backgroundText}
+            backgroundTextColor={data.backgroundTextColor}
+            backgroundTextStyle={data.backgroundTextStyle}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundText={data.showBackgroundText}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : data.selectedStyle === 3 ? (
+          <CoverThumbnailCreatorSpotlight
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : data.selectedStyle === 4 ? (
+          <CoverThumbnailAnnouncement1
+            category={data.category}
+            title={data.title}
+            coverImage1={data.heroImage}
+            imageFit1={data.imageFit}
+            coverImage2={data.heroImage2}
+            imageFit2={data.imageFit2 || 'cover'}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        ) : (
+          <CoverThumbnailFeatureArticleColour
+            category={data.category}
+            title={data.title}
+            coverImage={data.heroImage}
+            imageFit={data.imageFit}
+            backgroundColor={data.backgroundColor}
+            backgroundImage={data.backgroundImage}
+            backgroundImageFit={data.backgroundImageFit}
+            backgroundText={data.backgroundText}
+            backgroundTextColor={data.backgroundTextColor}
+            backgroundTextStyle={data.backgroundTextStyle}
+            iconCount1={''}
+            iconCount2={''}
+            showHeroImage={data.showHeroImage}
+            showBackgroundText={data.showBackgroundText}
+            showBackgroundColor={data.showBackgroundColor}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function RecommendedArticles({
+  articles,
+  onArticleSelect
+}: {
+  articles: Article[];
+  onArticleSelect?: (id: string) => void;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobileOrTablet = useIsMobileOrTablet();
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = isMobileOrTablet ? 191 : 350; // Mobile: 179px width + 12px gap, Desktop: ~350px
+      const scrollAmount = isMobileOrTablet ? 245 : 400; // Mobile: 233px width + 12px gap, Desktop: ~400px
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -96,6 +176,12 @@ export function RecommendedArticles() {
             paddingRight: '19px'
           }}
         >
+          <div
+            className="text-[14px] font-semibold tracking-wide uppercase mb-[16px]"
+            style={{ color: '#f1f0eb' }}
+          >
+            Recommended For You
+          </div>
           {/* Articles Container */}
           <div className="relative">
             <div 
@@ -106,22 +192,31 @@ export function RecommendedArticles() {
                 msOverflowStyle: 'none'
               }}
             >
-              {ARTICLES.map((article) => (
+              {articles.map((article) => (
                 <div
                   key={article.id}
-                  className="flex-shrink-0 group"
-                  style={{ width: '179px' }}
+                  className="flex-shrink-0 group cursor-pointer"
+                  style={{ width: '233px' }}
+                  onClick={() => onArticleSelect?.(article.id)}
                 >
                   {/* Article Image */}
                   <div 
                     className="w-full rounded-[3px] overflow-hidden mb-[16px] relative bg-[#1a1a1a] border transition-all duration-500"
                     style={{
-                      height: '179px',
+                      aspectRatio: '1512 / 851',
                       borderColor: '#2a2a2a'
                     }}
                   >
                     <div className="w-full h-full transition-transform duration-500 group-active:scale-110">
-                      {article.icon}
+                      {article.coverData ? (
+                        <CoverComposite data={article.coverData} />
+                      ) : article.coverImage ? (
+                        <img
+                          src={article.coverImage}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : null}
                     </div>
                     {/* Overlay on tap */}
                     <div 
@@ -142,26 +237,12 @@ export function RecommendedArticles() {
 
                   {/* Article Info */}
                   <div>
-                    <div className="flex items-center gap-[8px] mb-[8px]">
-                      <span 
-                        className="text-[9px] font-bold tracking-wider uppercase"
-                        style={{ color: '#a79755' }}
-                      >
-                        {article.category}
-                      </span>
-                      <span 
-                        className="text-[9px]"
-                        style={{ color: '#9e9e9d' }}
-                      >
-                        •
-                      </span>
-                      <span 
-                        className="text-[9px]"
-                        style={{ color: '#9e9e9d' }}
-                      >
-                        {article.readTime}
-                      </span>
-                    </div>
+                    <span 
+                      className="text-[9px] font-bold tracking-wider uppercase"
+                      style={{ color: '#a79755' }}
+                    >
+                      {article.category || 'UNCATEGORIZED'}
+                    </span>
                     <h3 
                       className="text-[14px] font-bold transition-colors"
                       style={{ color: '#f1f0eb' }}
@@ -198,19 +279,6 @@ export function RecommendedArticles() {
             </button>
           </div>
 
-          {/* Back to Landing Button */}
-          <div className="mt-[40px] flex justify-center">
-            <button
-              className="px-[32px] py-[12px] rounded-[8px] text-[13px] font-semibold transition-all active:opacity-60"
-              style={{ 
-                backgroundColor: '#2a2a2a',
-                border: '1px solid #3a3a3a',
-                color: '#f1f0eb'
-              }}
-            >
-              Browse All
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -219,6 +287,12 @@ export function RecommendedArticles() {
   // Desktop layout
   return (
     <div className="w-full py-[60px] md:py-[80px] px-[20px] md:px-[40px]" style={{ backgroundColor: '#0d0d0d' }}>
+      <div
+        className="text-[20px] font-semibold tracking-wide uppercase mb-[24px]"
+        style={{ color: '#f1f0eb' }}
+      >
+        Recommended For You
+      </div>
       {/* Articles Container */}
       <div className="relative max-w-[1400px] mx-auto">
         {/* Horizontal Scroll Container */}
@@ -230,20 +304,30 @@ export function RecommendedArticles() {
             msOverflowStyle: 'none'
           }}
         >
-          {ARTICLES.map((article) => (
+          {articles.map((article) => (
             <div
               key={article.id}
-              className="flex-shrink-0 w-[280px] md:w-auto group cursor-pointer snap-start"
+              className="flex-shrink-0 w-[364px] md:w-auto group cursor-pointer snap-start"
+              onClick={() => onArticleSelect?.(article.id)}
             >
               {/* Article Image */}
               <div 
-                className="w-full h-[280px] rounded-[3px] overflow-hidden mb-[20px] relative bg-[#1a1a1a] border transition-all duration-500"
+                className="w-full rounded-[3px] overflow-hidden mb-[20px] relative bg-[#1a1a1a] border transition-all duration-500"
                 style={{
+                  aspectRatio: '1512 / 851',
                   borderColor: '#2a2a2a'
                 }}
               >
                 <div className="w-full h-full transition-transform duration-500 group-hover:scale-110">
-                  {article.icon}
+                  {article.coverData ? (
+                    <CoverComposite data={article.coverData} />
+                  ) : article.coverImage ? (
+                    <img
+                      src={article.coverImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
                 </div>
                 {/* Overlay on hover */}
                 <div 
@@ -264,26 +348,12 @@ export function RecommendedArticles() {
 
               {/* Article Info */}
               <div>
-                <div className="flex items-center gap-[12px] mb-[12px]">
-                  <span 
-                    className="text-[11px] font-bold tracking-wider uppercase"
-                    style={{ color: '#a79755' }}
-                  >
-                    {article.category}
-                  </span>
-                  <span 
-                    className="text-[11px]"
-                    style={{ color: '#9e9e9d' }}
-                  >
-                    •
-                  </span>
-                  <span 
-                    className="text-[11px]"
-                    style={{ color: '#9e9e9d' }}
-                  >
-                    {article.readTime}
-                  </span>
-                </div>
+                <span 
+                  className="text-[11px] font-bold tracking-wider uppercase"
+                  style={{ color: '#a79755' }}
+                >
+                  {article.category || 'UNCATEGORIZED'}
+                </span>
                 <h3 
                   className="text-[22px] font-bold transition-colors group-hover:text-[#11ff49]"
                   style={{ color: '#f1f0eb' }}
@@ -316,20 +386,6 @@ export function RecommendedArticles() {
           }}
         >
           <ChevronRight size={18} color="#f1f0eb" />
-        </button>
-      </div>
-
-      {/* Back to Landing Button */}
-      <div className="mt-[60px] flex justify-center">
-        <button
-          className="px-[40px] py-[16px] rounded-[8px] text-[16px] font-semibold transition-all hover:opacity-80"
-          style={{ 
-            backgroundColor: '#2a2a2a',
-            border: '1px solid #3a3a3a',
-            color: '#f1f0eb'
-          }}
-        >
-          Browse All Articles
         </button>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 const products = [
   {
@@ -61,6 +61,11 @@ interface ProductCarouselProps {
 export function ProductCarousel({ products: propProducts, onEdit }: ProductCarouselProps) {
   const displayProducts = propProducts || products;
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const wasDraggedRef = useRef(false);
   const openCollection = (product: any) => {
     const collectionId = product?.collectionId ?? product?.collectionid ?? product?.collection_id;
     if (!collectionId) return;
@@ -68,24 +73,40 @@ export function ProductCarousel({ products: propProducts, onEdit }: ProductCarou
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    isDraggingRef.current = true;
+    setIsMouseDown(true);
+    wasDraggedRef.current = false;
+    startXRef.current = event.pageX - container.offsetLeft;
+    scrollLeftRef.current = container.scrollLeft;
+  };
 
-    const handleDown = () => setIsMouseDown(true);
-    const handleUp = () => setIsMouseDown(false);
-    
-    window.addEventListener('mousedown', handleDown);
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchstart', handleDown);
-    window.addEventListener('touchend', handleUp);
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    event.preventDefault();
+    const x = event.pageX - container.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    if (Math.abs(walk) > 5) {
+      wasDraggedRef.current = true;
+    }
+    container.scrollLeft = scrollLeftRef.current - walk;
+  };
 
-    return () => {
-      window.removeEventListener('mousedown', handleDown);
-      window.removeEventListener('mouseup', handleUp);
-      window.removeEventListener('touchstart', handleDown);
-      window.removeEventListener('touchend', handleUp);
-    };
-  }, []);
+  const handleMouseUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsMouseDown(false);
+  };
+
+  const handleMouseLeave = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsMouseDown(false);
+  };
 
   return (
     <div className="w-full bg-[#1A1A1A] text-white flex flex-col items-center overflow-hidden font-sans select-none relative">
@@ -194,12 +215,25 @@ export function ProductCarousel({ products: propProducts, onEdit }: ProductCarou
       `}} />
 
       {/* Main Scroll Area - restored gap-2 for tightest overlap */}
-      <div className={`scroll-container flex items-center w-full h-[350px] sm:h-[650px] overflow-x-auto gap-2 ${isMouseDown ? 'is-pressed' : ''}`}>
+      <div
+        ref={scrollRef}
+        className={`scroll-container flex items-center w-full h-[350px] sm:h-[650px] overflow-x-auto gap-2 ${isMouseDown ? 'is-pressed' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      >
         {displayProducts.map((product) => (
           <div key={product.id} className="card-wrapper flex items-center justify-center relative">
             <div 
               className="product-card relative w-full aspect-square rounded-[3px] flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden cursor-pointer"
-              onClick={() => openCollection(product)}
+              onClick={() => {
+                if (wasDraggedRef.current) {
+                  wasDraggedRef.current = false;
+                  return;
+                }
+                openCollection(product);
+              }}
             >
               {/* Product Image */}
               <img 

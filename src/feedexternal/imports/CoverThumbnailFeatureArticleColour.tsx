@@ -1,4 +1,3 @@
-import svgPaths from "./svg-8vctfwm2s6";
 import imgRectangle1540 from "../../assets/931ef8e14bd8f3516acd9bea1676dbd4b8d4987d.png";
 import { MediaDisplay } from "../components/MediaDisplay";
 import { useRef, useEffect, useState } from 'react';
@@ -38,7 +37,7 @@ function Frame({ coverImage, imageFit }: { coverImage?: string | null, imageFit?
   );
 }
 
-export default function CoverThumbnailFeatureArticleColour({ category, title, coverImage, imageFit, backgroundColor, backgroundImage, backgroundImageFit, backgroundText, backgroundTextColor, backgroundTextStyle, iconCount1, iconCount2, showHeroImage, showBackgroundText, showBackgroundColor }: CoverThumbnailFeatureArticleColourProps) {
+export default function CoverThumbnailFeatureArticleColour({ category, title, coverImage, imageFit, backgroundColor, backgroundImage, backgroundImageFit, backgroundText, backgroundTextColor, backgroundTextStyle, showHeroImage, showBackgroundText, showBackgroundColor }: CoverThumbnailFeatureArticleColourProps) {
   const defaultColor = backgroundTextColor || '#f1f0eb';
   const textStyle = backgroundTextStyle === 'stroke'
     ? {
@@ -50,10 +49,6 @@ export default function CoverThumbnailFeatureArticleColour({ category, title, co
 
   const textRef = useRef<HTMLParagraphElement>(null);
   const [fontSize, setFontSize] = useState(860);
-  const [hoveredIcon, setHoveredIcon] = useState<'heart' | 'plane' | null>(null);
-  const [activeIcon, setActiveIcon] = useState<'heart' | 'plane' | null>(null);
-  const heartCount = iconCount1 || '112';
-  const planeCount = iconCount2 || '23';
   const maxWidth = 1351;
 
   useEffect(() => {
@@ -137,61 +132,6 @@ export default function CoverThumbnailFeatureArticleColour({ category, title, co
         <div className="relative inline-block">
           <div className="absolute inset-0 bg-[#1a1a1a] opacity-65" style={{ marginLeft: '-9px', marginRight: '-9px', marginTop: '-6px', marginBottom: '-6px' }} />
           <p className="relative font-['Inter',sans-serif] font-light leading-[normal] not-italic text-[#f1f0eb] text-[30px] uppercase" dangerouslySetInnerHTML={{ __html: title || 'ENTER HEADLINE HERE' }} />
-        </div>
-        <div
-          className="flex items-center gap-[22px]"
-          style={{ color: '#f1f0eb' }}
-        >
-          <div
-            className="flex flex-col items-center gap-[6px]"
-            onMouseEnter={() => setHoveredIcon('heart')}
-            onMouseLeave={() => {
-              setHoveredIcon(null);
-              setActiveIcon(null);
-            }}
-            onMouseDown={() => setActiveIcon('heart')}
-            onMouseUp={() => setActiveIcon(null)}
-          >
-            <svg className="block size-[30px]" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-              <g id="heart">
-                <path
-                  clipRule="evenodd"
-                  d={svgPaths.p2e417780}
-                  fillRule="evenodd"
-                  stroke={hoveredIcon === 'heart' || activeIcon === 'heart' ? '#11ff49' : '#f1f0eb'}
-                  fill={activeIcon === 'heart' ? '#11ff49' : 'none'}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                />
-              </g>
-            </svg>
-            <div className="text-[14px] leading-[normal]">{heartCount}</div>
-          </div>
-          <div
-            className="flex flex-col items-center gap-[6px]"
-            onMouseEnter={() => setHoveredIcon('plane')}
-            onMouseLeave={() => {
-              setHoveredIcon(null);
-              setActiveIcon(null);
-            }}
-            onMouseDown={() => setActiveIcon('plane')}
-            onMouseUp={() => setActiveIcon(null)}
-          >
-            <svg className="block size-[30px]" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-              <g id="send-01">
-                <path
-                  d={svgPaths.p3e23b940}
-                  stroke={hoveredIcon === 'plane' || activeIcon === 'plane' ? '#11ff49' : '#f1f0eb'}
-                  fill={activeIcon === 'plane' ? '#11ff49' : 'none'}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                />
-              </g>
-            </svg>
-            <div className="text-[14px] leading-[normal]">{planeCount}</div>
-          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,8 @@ interface OpeningStyle1Props {
   description: string;
   iconCount1: string;
   iconCount2: string;
+  onLike?: () => void;
+  onShare?: () => void;
   textPrimary?: string;
   textAccent?: string;
   fontFamily?: string;
@@ -36,6 +38,8 @@ export function OpeningStyle1({
   description,
   iconCount1,
   iconCount2,
+  onLike,
+  onShare,
   textPrimary = '#f1f0eb',
   textAccent = '#11ff49',
   fontFamily = 'Inter',
@@ -77,10 +81,10 @@ export function OpeningStyle1({
       <div className="w-full h-full relative" style={{ backgroundColor: '#1a1a1a' }}>
         
         {/* Text layer with fade animation */}
-        <div className="flex flex-col h-full justify-center px-[80px]">
+        <div className={!coverImage ? "flex flex-col px-[80px] pt-[80px]" : ""}>
           {/* Title */}
           <div 
-            className={`content-stretch flex items-start py-[10px] ${!coverImage ? 'w-[90%] mb-[80px]' : 'h-[280px] max-h-[280px] w-[600px] max-w-[600px] mb-[30px]'}`}
+            className={`content-stretch flex items-start py-[10px] ${!coverImage ? 'w-[80%] mb-[80px]' : 'absolute h-[280px] max-h-[280px] left-[80px] top-[80px] w-[600px] max-w-[600px]'}`}
           >
             <div 
               className="flex-[1_0_0] min-h-px min-w-px not-italic relative whitespace-pre-wrap leading-[normal]"
@@ -103,81 +107,102 @@ export function OpeningStyle1({
             </div>
           </div>
 
-          {/* Headline */}
           <div 
-            className={`content-stretch flex items-start py-[10px] ${!coverImage ? 'w-[90%] mb-[20px]' : 'h-[165px] max-h-[165px] w-[600px] max-w-[600px]'}`}
+            className={`content-stretch flex flex-col gap-[40px] items-start ${!coverImage ? 'w-[80%] justify-start' : 'absolute h-[370px] max-h-[370px] justify-end left-[80px] top-[401px] w-[600px] max-w-[600px]'}`}
           >
-            <div 
-              className="flex-[1_0_0] min-h-px min-w-px not-italic relative whitespace-pre-wrap leading-[normal]"
-              style={{
-                fontFamily: `'${fontFamily}',sans-serif`,
-                fontWeight: '600',
-                fontSize: '20px',
-                color: textAccent
-              }}
-            >
-              {headline}
-            </div>
-          </div>
-
-          {/* Description */}
-          <div 
-            className={`content-stretch flex items-start py-[10px] ${!coverImage ? 'w-[90%] mb-[60px]' : 'h-[178px] max-h-[178px] w-[600px] max-w-[600px] -mt-[40px]'}`}
-          >
-            <div 
-              className="flex-[1_0_0] min-h-px min-w-px not-italic relative whitespace-pre-wrap leading-[30px]"
+            <p 
+              className="h-[18px] leading-[normal] not-italic relative shrink-0 w-full whitespace-pre-wrap"
               style={{
                 fontFamily: `'${fontFamily}',sans-serif`,
                 fontWeight: '400',
-                fontSize: '16px',
-                color: textPrimary,
-                marginBottom: '50px'
+                fontSize: '14px',
+                color: textPrimary
               }}
             >
-              {description}
-            </div>
-          </div>
+              {author}
+            </p>
 
-          {/* Icons */}
-          <div className={`flex items-center gap-[28px] mt-[30px]`} style={{ color: textPrimary, pointerEvents: 'auto' }}>
-            <div
-              className="flex flex-col items-center gap-[6px]"
-              onMouseEnter={() => setHoveredIcon('heart')}
-              onMouseLeave={() => {
-                setHoveredIcon(null);
-                setActiveIcon(null);
+            <div 
+              className="leading-[normal] not-italic relative shrink-0 w-full"
+              style={{
+                fontFamily: `'${fontFamily}',sans-serif`,
+                fontWeight: '400',
+                fontSize: '0px',
+                color: textPrimary
               }}
-              onMouseDown={() => setActiveIcon('heart')}
-              onMouseUp={() => setActiveIcon(null)}
             >
-              <Heart
-                size={30}
-                strokeWidth={1.5}
-                color={hoveredIcon === 'heart' || activeIcon === 'heart' ? textAccent : textPrimary}
-                fill={activeIcon === 'heart' ? textAccent : 'none'}
-              />
-              <div style={{ fontSize: '14px', color: textPrimary }}>
-                {iconCount1}
+              <div className="whitespace-pre-wrap">
+                {headline && (
+          <p 
+            className="mb-[25px]" 
+            style={{ 
+              fontSize: '23px', 
+              fontWeight: '500', 
+              color: textAccent, 
+              lineHeight: 'normal' 
+            }}
+          >
+            {headline}
+          </p>
+        )}
+        <p 
+          className="mb-0" 
+          style={{ 
+            fontSize: '19px', 
+            fontWeight: '300', 
+            lineHeight: '25px', 
+            color: textPrimary,
+            marginBottom: '50px'
+          }}
+        >
+          {description}
+        </p>
               </div>
             </div>
-            <div
-              className="flex flex-col items-center gap-[6px]"
-              onMouseEnter={() => setHoveredIcon('plane')}
-              onMouseLeave={() => {
-                setHoveredIcon(null);
-                setActiveIcon(null);
-              }}
-              onMouseDown={() => setActiveIcon('plane')}
-              onMouseUp={() => setActiveIcon(null)}
-            >
-              <Send
-                size={30}
-                strokeWidth={1.5}
-                color={hoveredIcon === 'plane' || activeIcon === 'plane' ? textAccent : textPrimary}
-                fill={activeIcon === 'plane' ? textAccent : 'none'}
-              />
-              <div style={{ fontSize: '14px', color: textPrimary }}>
-                {iconCount2}
+
+            <div className="flex items-center gap-[20px]" style={{ color: textPrimary, pointerEvents: 'auto' }}>
+              <div
+                className="flex flex-col items-center gap-[6px] cursor-pointer"
+                onMouseEnter={() => setHoveredIcon('heart')}
+                onMouseLeave={() => {
+                  setHoveredIcon(null);
+                  setActiveIcon(null);
+                }}
+                onMouseDown={() => setActiveIcon('heart')}
+                onMouseUp={() => setActiveIcon(null)}
+                onClick={onLike}
+              >
+                <Heart
+                  size={30}
+                  strokeWidth={1.5}
+                  color={hoveredIcon === 'heart' || activeIcon === 'heart' ? textAccent : textPrimary}
+                  fill={activeIcon === 'heart' ? textAccent : 'none'}
+                />
+                <div style={{ fontSize: '14px', color: textPrimary }}>
+                  {iconCount1}
+                </div>
+              </div>
+              <div
+                className="flex flex-col items-center gap-[6px] cursor-pointer"
+                style={{ marginLeft: '20px' }}
+                onMouseEnter={() => setHoveredIcon('plane')}
+                onMouseLeave={() => {
+                  setHoveredIcon(null);
+                  setActiveIcon(null);
+                }}
+                onMouseDown={() => setActiveIcon('plane')}
+                onMouseUp={() => setActiveIcon(null)}
+                onClick={onShare}
+              >
+                <Send
+                  size={30}
+                  strokeWidth={1.5}
+                  color={hoveredIcon === 'plane' || activeIcon === 'plane' ? textAccent : textPrimary}
+                  fill={activeIcon === 'plane' ? textAccent : 'none'}
+                />
+                <div style={{ fontSize: '14px', color: textPrimary }}>
+                  {iconCount2}
+                </div>
               </div>
             </div>
           </div>

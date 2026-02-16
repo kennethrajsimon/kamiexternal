@@ -281,7 +281,7 @@ export function OpeningStyle1TextLayer({
                 <p 
                   className="mb-[25px]" 
                   style={{ 
-                    fontSize: '20px', 
+                    fontSize: '23px', 
                     fontWeight: '500', 
                     color: textAccent, 
                     lineHeight: 'normal' 
@@ -293,7 +293,7 @@ export function OpeningStyle1TextLayer({
               <p 
                 className="mb-0" 
                 style={{ 
-                  fontSize: '16px', 
+                  fontSize: '19px', 
                   fontWeight: '300', 
                   lineHeight: '25px', 
                   color: textPrimary 

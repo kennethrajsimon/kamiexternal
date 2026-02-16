@@ -281,7 +281,7 @@ export function OpeningStyle1TextLayer({
                 <p 
                   className="mb-[25px]" 
                   style={{ 
-                    fontSize: '20px', 
+                    fontSize: '23px', 
                     fontWeight: '500', 
                     color: textAccent, 
                     lineHeight: 'normal' 
@@ -293,7 +293,7 @@ export function OpeningStyle1TextLayer({
               <p 
                 className="mb-0" 
                 style={{ 
-                  fontSize: '16px', 
+                  fontSize: '19px', 
                   fontWeight: '300', 
                   lineHeight: '25px', 
                   color: textPrimary 
@@ -379,7 +379,7 @@ export function OpeningStyle1TextLayer({
           fontFamily: `'${fontFamily}',sans-serif`,
           fontWeight: '300',
           fontSize: '32px',
-          lineHeight: '38px',
+          lineHeight: '34px',
           color: textPrimary
         }}
       >
@@ -390,7 +390,7 @@ export function OpeningStyle1TextLayer({
           fontSize="32px"
           fontWeight="300"
           color={textPrimary}
-          lineHeight="38px"
+          lineHeight="34px"
         />
       </div>
 
@@ -418,7 +418,7 @@ export function OpeningStyle1TextLayer({
       {/* Author */}
       {author && (
         <div 
-          className="w-full mb-[24px]"
+          className="w-full mb-[48px]"
           style={{
             fontFamily: `'${fontFamily}',sans-serif`,
             fontWeight: '400',
@@ -434,14 +434,14 @@ export function OpeningStyle1TextLayer({
       {/* Headline */}
       {headline && (
         <div 
-          className="w-full mb-[16px]"
+          className="w-full mb-[32px]"
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.35)',
-            padding: '10px 14px',
+            padding: '20px 14px',
             fontFamily: `'${fontFamily}',sans-serif`,
             fontWeight: '500',
             fontSize: '16px',
-            lineHeight: '22px',
+            lineHeight: '20px',
             color: textAccent
           }}
         >

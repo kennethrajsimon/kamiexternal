@@ -840,6 +840,24 @@ export function ContentStyle2TextLayer({
                   <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
                 </>
               )}
+
+              {bodyCopies?.filter((bodyCopy, index) => {
+                const hasHeader = !!paragraphHeaders?.some(header => header.id === bodyCopy.afterHeaderId);
+                return index !== 0 && (!bodyCopy.afterHeaderId || !hasHeader);
+              }).map((bodyCopy) => (
+                <div key={bodyCopy.id}>
+                  {bodyCopy.text && (
+                    <>
+                      <div 
+                        className="mb-0 text-[18px]"
+                        style={{ lineHeight: '25px' }}
+                        dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                      />
+                      <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                    </>
+                  )}
+                </div>
+              ))}
               
               {paragraphHeaders?.map((header) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
@@ -851,12 +869,12 @@ export function ContentStyle2TextLayer({
                       <>
                         <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
                         {showHeader && (
-                          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
+                          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[19px]">{header.text}</p>
                         )}
                         {showBody && (
                           <>
                             <div 
-                              className="mb-0 text-[15px]"
+                              className="mb-0 text-[18px]"
                               style={{ lineHeight: '25px' }}
                               dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
                             />

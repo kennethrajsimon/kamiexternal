@@ -70,16 +70,16 @@ function Frame1({ introParagraph, paragraphHeaders, bodyCopies, topLabel }: {
               <div key={header.id}>
                 {header.text && (
                   <>
-                    <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
+                    <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                    <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[22px]">{header.text}</h3>
                     {bodyCopy?.text && (
                       <>
                         <div 
-                          className="leading-[normal] mb-0 text-[15px]"
+                          className="leading-[normal] mb-0 text-[18px] rich-preview-content"
                           style={{ lineHeight: '25px' }}
                           dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
                         />
-                        <p className="leading-[normal] mb-0 text-[15px]" style={{ height: '18px' }}>&nbsp;</p>
+                        <p className="leading-[normal] mb-0 text-[18px]" style={{ height: '18px' }}>&nbsp;</p>
                       </>
                     )}
                   </>
@@ -161,7 +161,9 @@ function Component2ndPageContainer({ image1, image2, image1Fit, image2Fit, efx }
               left: onlyImage2 ? '772px' : '1109.5px',
               top: onlyImage2 ? '80px' : '283px',
               width: onlyImage2 ? '660px' : '322.5px',
-              height: onlyImage2 ? '691px' : '428.147px'
+              height: onlyImage2 ? '691px' : '428.147px',
+              overflow: 'hidden',
+              borderRadius: '3px'
             }}
             data-name="Female Designer 1"
           >
@@ -174,6 +176,7 @@ function Component2ndPageContainer({ image1, image2, image1Fit, image2Fit, efx }
             >
               <div className="relative w-full h-full">
                 <ImageWithFallback 
+                  key={`${img2Src}-${image2Fit || 'cover'}`}
                   alt="" 
                   className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
                   style={{ objectFit: image2Fit || 'cover' }}
@@ -214,6 +217,26 @@ export default function ContentStyle1V4({
       cleanedIntroParagraph = cleanedIntroParagraph.replace(regex, '').trim();
     }
   }
+  const ensureLinkTargets = (html: string) =>
+    html.replace(/<a\b([^>]*?)>/gi, (_match, attrs) => {
+      let next = attrs;
+      if (/target\s*=/i.test(next)) {
+        next = next.replace(/target\s*=\s*(['"])(.*?)\1/i, 'target="_blank"');
+      } else {
+        next = `${next} target="_blank"`;
+      }
+      const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      if (relMatch) {
+        const relParts = relMatch[2].split(/\s+/).filter(Boolean);
+        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        const relValue = relParts.join(' ');
+        next = next.replace(relMatch[0], `rel="${relValue}"`);
+      } else {
+        next = `${next} rel="noopener noreferrer"`;
+      }
+      return `<a${next}>`;
+    });
   
   return (
     <>
@@ -263,7 +286,7 @@ export default function ContentStyle1V4({
               {introParagraph || ''}
             </div>
             
-            <div className="font-['Inter:Regular',sans-serif] font-normal leading-[0] text-[0px] w-[661px]">
+            <div className="font-['Inter:Regular',sans-serif] font-normal w-[661px]">
               {/* Only render body copies that DON'T have an afterHeaderId (orphaned body copies) */}
               {bodyCopies?.filter(bc => !bc.afterHeaderId).map((bodyCopy, index) => {
                 return (
@@ -273,7 +296,7 @@ export default function ContentStyle1V4({
                         <div 
                           className="leading-[normal] mb-0 text-[15px]"
                           style={{ lineHeight: '25px' }}
-                          dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                          dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
                         />
                         <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
                       </>
@@ -297,15 +320,15 @@ export default function ContentStyle1V4({
               </div>
             </div>
             
-            <div className="font-['Inter:Regular',sans-serif] font-normal leading-[0] text-[0px] w-[661px]">
+            <div className="font-['Inter:Regular',sans-serif] font-normal w-[661px]">
               {/* Spacers for orphaned body copies in layer 2 */}
               {bodyCopies?.filter(bc => !bc.afterHeaderId).map((bodyCopy, index) => {
                 return (
                   <div key={bodyCopy.id}>
                     {bodyCopy.text && (
                       <>
-                        <div className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px', opacity: 0, pointerEvents: 'none' }} dangerouslySetInnerHTML={{ __html: bodyCopy.text }} />
-                        <p className="leading-[normal] mb-0 text-[15px]" style={{ opacity: 0, pointerEvents: 'none' }}>&nbsp;</p>
+                        <div className="leading-[normal] mb-0 text-[18px] rich-preview-content" style={{ lineHeight: '25px', opacity: 0, pointerEvents: 'none' }} dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }} />
+                        <p className="leading-[normal] mb-0 text-[18px]" style={{ opacity: 0, pointerEvents: 'none' }}>&nbsp;</p>
                       </>
                     )}
                   </div>
@@ -315,20 +338,24 @@ export default function ContentStyle1V4({
               {/* Actual visible paragraph headers with their attached body copies */}
               {paragraphHeaders?.map((header, index) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
+                const showHeader = !!header.text;
+                const showBody = !!bodyCopy?.text;
                 return (
                   <div key={header.id}>
-                    {header.text && (
+                    {(showHeader || showBody) && (
                       <>
-                        <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                        {bodyCopy?.text && (
+                        <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                        {showHeader && (
+                          <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[22px]">{header.text}</h3>
+                        )}
+                        {showBody && (
                           <>
                             <div 
-                              className="leading-[normal] mb-0 text-[15px]"
+                              className="leading-[normal] mb-0 text-[18px] rich-preview-content"
                               style={{ lineHeight: '25px' }}
-                              dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                              dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
                             />
-                            <p className="leading-[normal] mb-0 text-[15px]" style={{ height: '18px' }}>&nbsp;</p>
+                            <p className="leading-[normal] mb-0 text-[18px]" style={{ height: '18px' }}>&nbsp;</p>
                           </>
                         )}
                       </>

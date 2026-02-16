@@ -132,31 +132,31 @@ export function OpeningStyle1({
             >
               <div className="whitespace-pre-wrap">
                 {headline && (
-                  <p 
-                    className="mb-[25px]" 
-                    style={{ 
-                      fontSize: '20px', 
-                      fontWeight: '500', 
-                      color: textAccent, 
-                      lineHeight: 'normal' 
-                    }}
-                  >
-                    {headline}
-                  </p>
-                )}
-                <p 
-                  className="mb-0" 
-                  style={{ 
-                    fontSize: '16px', 
-                    fontWeight: '300', 
-                    lineHeight: '25px', 
-                    color: textPrimary,
-                    marginBottom: 0,
-                    whiteSpace: 'pre-wrap'
-                  }}
-                >
-                  {description}
-                </p>
+          <p 
+            className="mb-[25px]" 
+            style={{ 
+              fontSize: '23px', 
+              fontWeight: '500', 
+              color: textAccent, 
+              lineHeight: 'normal' 
+            }}
+          >
+            {headline}
+          </p>
+        )}
+        <p 
+          className="mb-0" 
+          style={{ 
+            fontSize: '19px', 
+            fontWeight: '300', 
+            lineHeight: '25px', 
+            color: textPrimary,
+            marginBottom: 0,
+            whiteSpace: 'pre-wrap'
+          }}
+        >
+          {description}
+        </p>
               </div>
 
               {/* Spacer for Gap */}

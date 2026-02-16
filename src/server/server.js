@@ -67,6 +67,8 @@ addColumnIfMissing('section_visibility_json', 'TEXT');
 addColumnIfMissing('selected_style', 'TEXT');
 addColumnIfMissing('has_featured_products', 'INTEGER DEFAULT 1');
 addColumnIfMissing('has_recommended_reading', 'INTEGER DEFAULT 0');
+addColumnIfMissing('likes', 'INTEGER DEFAULT 0');
+addColumnIfMissing('shares', 'INTEGER DEFAULT 0');
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
@@ -94,9 +96,41 @@ app.get('/api/saved-pages', (req, res) => {
     savedAt: r.saved_at,
     efxMode: r.efx_mode,
     hasFeaturedProducts: !!r.has_featured_products,
-    hasRecommendedReading: !!r.has_recommended_reading
+    hasRecommendedReading: !!r.has_recommended_reading,
+    likes: r.likes || 0,
+    shares: r.shares || 0
   }));
   res.json(result);
+});
+
+app.post('/api/pages/:id/like', (req, res) => {
+  const { id } = req.params;
+  try {
+    const info = db.prepare('UPDATE saved_pages SET likes = likes + 1 WHERE id = ?').run(id);
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+    const row = db.prepare('SELECT likes FROM saved_pages WHERE id = ?').get(id);
+    res.json({ likes: row.likes });
+  } catch (error) {
+    console.error('Error updating likes:', error);
+    res.status(500).json({ error: 'Failed to update likes' });
+  }
+});
+
+app.post('/api/pages/:id/share', (req, res) => {
+  const { id } = req.params;
+  try {
+    const info = db.prepare('UPDATE saved_pages SET shares = shares + 1 WHERE id = ?').run(id);
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+    const row = db.prepare('SELECT shares FROM saved_pages WHERE id = ?').get(id);
+    res.json({ shares: row.shares });
+  } catch (error) {
+    console.error('Error updating shares:', error);
+    res.status(500).json({ error: 'Failed to update shares' });
+  }
 });
 
 app.get('/api/saved-pages/:id', (req, res) => {

@@ -27,3 +27,15 @@ export async function deleteDraft(id: string) {
   if (!res.ok) throw new Error('Failed to delete draft');
   return res.json();
 }
+
+export async function likePage(id: string) {
+  const res = await fetch(`${apiBase}/api/pages/${id}/like`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to like page');
+  return res.json();
+}
+
+export async function sharePage(id: string) {
+  const res = await fetch(`${apiBase}/api/pages/${id}/share`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to share page');
+  return res.json();
+}

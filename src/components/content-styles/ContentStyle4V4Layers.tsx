@@ -127,10 +127,10 @@ export function ContentStyle4ImageLayer({
   }
   
   // Image 2 animation - simple slide up/down with fade
-  const img2EnterStart = 0.10;
-  const img2EnterEnd = 0.40;
-  const img2ExitStart = 0.75;
-  const img2ExitEnd = 0.95;
+  const img2EnterStart = 0.05;
+  const img2EnterEnd = 0.35;
+  const img2ExitStart = 0.70;
+  const img2ExitEnd = 0.90;
   
   let img2Opacity = 0;
   let img2Y = 0;
@@ -740,11 +740,11 @@ export function ContentStyle4TextLayer({
               {shouldRenderFirstBodyCopy && (
                 <>
                   <div 
-                    className="leading-[normal] mb-0 text-[15px]"
+                    className="leading-[normal] mb-0 text-[18px]"
                     style={{ lineHeight: '25px' }}
                     dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
                   />
-                  <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                  <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                 </>
               )}
               
@@ -754,16 +754,16 @@ export function ContentStyle4TextLayer({
                   <div key={header.id}>
                     {header.text && (
                       <>
-                        <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
+                        <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[19px]">{header.text}</p>
                         {bodyCopy?.text && (
                           <>
                             <div 
-                              className="mb-0 text-[15px]"
+                              className="mb-0 text-[18px]"
                               style={{ lineHeight: '25px' }}
                               dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
                             />
-                            <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                            <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                           </>
                         )}
                       </>

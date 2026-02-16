@@ -40,6 +40,8 @@ interface SavedPage {
   };
   hasFeaturedProducts?: boolean;
   hasRecommendedReading?: boolean;
+  likes?: number;
+  shares?: number;
   efxMode?: 'none' | 'glitch' | 'blur' | 'chromatic' | 'shake' | 'distort';
 }
 

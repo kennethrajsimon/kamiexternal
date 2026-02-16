@@ -68,8 +68,71 @@ export function RichTextEditor({ value, onChange, fontFamily, fontSize, textColo
   };
 
   const applyColor = (color: string) => {
-    document.execCommand('foreColor', false, color);
-    editorRef.current?.focus();
+    if (!editorRef.current) return;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      editorRef.current.focus();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const processNode = (node: Node): Node => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (element.style.color) {
+          element.style.color = '';
+          if (element.style.length === 0) {
+            element.removeAttribute('style');
+          }
+        }
+        if (element.tagName === 'FONT' && element.getAttribute('color')) {
+          element.removeAttribute('color');
+          if (element.attributes.length === 0) {
+            const fragment = document.createDocumentFragment();
+            while (element.firstChild) {
+              fragment.appendChild(processNode(element.firstChild));
+            }
+            return fragment;
+          }
+        }
+        if (element.tagName === 'SPAN' && element.attributes.length === 0) {
+          const fragment = document.createDocumentFragment();
+          while (element.firstChild) {
+            fragment.appendChild(processNode(element.firstChild));
+          }
+          return fragment;
+        }
+        const children = Array.from(element.childNodes);
+        children.forEach(child => {
+          const processed = processNode(child);
+          if (processed !== child) {
+            element.replaceChild(processed, child);
+          }
+        });
+      }
+      return node;
+    };
+
+    if (range.collapsed) {
+      editorRef.current.focus();
+      return;
+    }
+
+    const selectedContent = range.extractContents();
+    if (!selectedContent.hasChildNodes()) {
+      editorRef.current.focus();
+      return;
+    }
+    const span = document.createElement('span');
+    span.style.color = color;
+    const processedNodes = Array.from(selectedContent.childNodes).map(node => processNode(node));
+    processedNodes.forEach(node => span.appendChild(node));
+    range.insertNode(span);
+    range.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    handleInput();
+    editorRef.current.focus();
   };
 
   const applyFontSize = (size: string) => {
@@ -154,10 +217,42 @@ export function RichTextEditor({ value, onChange, fontFamily, fontSize, textColo
     selection.removeAllRanges();
     selection.addRange(range);
     document.execCommand('createLink', false, trimmed);
+    const root = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? (range.commonAncestorContainer as Element)
+      : range.commonAncestorContainer.parentElement;
+    if (root) {
+      const anchors = Array.from(root.querySelectorAll('a[href]')).filter(anchor => {
+        const anchorRange = document.createRange();
+        anchorRange.selectNodeContents(anchor);
+        return (
+          range.compareBoundaryPoints(Range.END_TO_START, anchorRange) < 0 &&
+          range.compareBoundaryPoints(Range.START_TO_END, anchorRange) > 0
+        );
+      });
+      anchors.forEach(anchor => {
+        anchor.setAttribute('target', '_blank');
+        anchor.setAttribute('rel', 'noopener noreferrer');
+      });
+    }
     selectionRangeRef.current = null;
     setLinkInputValue('');
     setIsLinkInputOpen(false);
     editorRef.current?.focus();
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const text = event.clipboardData.getData('text/plain');
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const escaped = normalized
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    const html = escaped.replace(/\n/g, '<br />');
+    document.execCommand('insertHTML', false, html);
+    handleInput();
   };
 
   const formatButtons = [
@@ -354,6 +449,7 @@ export function RichTextEditor({ value, onChange, fontFamily, fontSize, textColo
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onPaste={handlePaste}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyUp={cacheSelection}

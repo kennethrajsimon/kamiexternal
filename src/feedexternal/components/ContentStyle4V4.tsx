@@ -80,7 +80,7 @@ export default function ContentStyle4V4({
       
       {/* Layer 1: Left image (independent parallax) */}
       <AnimatedImageLayer layer={1}>
-        <div className="absolute left-[80px] top-[211px] w-[660px] h-[429px] relative" style={{ overflow: 'hidden', borderRadius: '3px' }} data-name="Left Image">
+        <div className="absolute left-[80px] top-[211px] w-[660px] h-[429px]" style={{ overflow: 'hidden', borderRadius: '3px' }} data-name="Left Image">
           <EFXWrapper
             glitchEnabled={!!efx?.glitch}
             blurEnabled={!!efx?.blur}
@@ -112,7 +112,7 @@ export default function ContentStyle4V4({
 
       {/* Layer 2: Right image (independent parallax) */}
       <AnimatedImageLayer layer={2}>
-        <div className="absolute left-[calc(50%+16px)] top-[211px] w-[660px] h-[429px] relative" style={{ overflow: 'hidden', borderRadius: '3px' }} data-name="Right Image">
+        <div className="absolute top-[211px] w-[660px] h-[429px]" style={{ left: '772px', overflow: 'hidden', borderRadius: '3px' }} data-name="Right Image">
           <EFXWrapper
             glitchEnabled={!!efx?.glitch}
             blurEnabled={!!efx?.blur}
@@ -135,7 +135,7 @@ export default function ContentStyle4V4({
       {/* Caption 2 */}
       {showCaption2 && (
         <AnimatedTextLayer layer={2}>
-           <div className="absolute left-[calc(50%+16px)] top-[650px] w-[660px]">
+           <div className="absolute top-[650px] w-[660px]" style={{ left: '772px' }}>
              <div className="font-['Inter'] font-bold text-[14px] text-[#f1f0eb]">{caption2Title}</div>
              <div className="font-['Inter'] font-normal text-[14px] text-[#9e9e9d]">{caption2Subtitle}</div>
            </div>

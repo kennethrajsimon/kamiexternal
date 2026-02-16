@@ -2837,45 +2837,47 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                     )}
 
                     {/* Product Carousel Visibility Toggle */}
-                    <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <h3
-                            className="font-['Inter:SemiBold',sans-serif]"
-                            style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
-                          >
-                            Featured Products
-                          </h3>
-                          <p
-                            className="font-['Inter:Regular',sans-serif]"
-                            style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
-                          >
-                            Show product carousel in this article
-                          </p>
+                    {currentPage.styleType === 'cover' && (
+                      <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <h3
+                              className="font-['Inter:SemiBold',sans-serif]"
+                              style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
+                            >
+                              Featured Products
+                            </h3>
+                            <p
+                              className="font-['Inter:Regular',sans-serif]"
+                              style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
+                            >
+                              Show product carousel in this article
+                            </p>
+                          </div>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={currentPage.hasFeaturedProducts !== false}
+                              onChange={(e) => {
+                                const newPages = [...docPages];
+                                const page = { ...newPages[currentPageIndex] };
+                                page.hasFeaturedProducts = e.target.checked;
+                                newPages[currentPageIndex] = page;
+                                setDocPages(newPages);
+                              }}
+                              className="w-5 h-5 cursor-pointer"
+                              style={{ accentColor: '#11ff49' }}
+                            />
+                            <span
+                              className="font-['Inter:Medium',sans-serif]"
+                              style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
+                            >
+                              {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
+                            </span>
+                          </label>
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={currentPage.hasFeaturedProducts !== false}
-                            onChange={(e) => {
-                              const newPages = [...docPages];
-                              const page = { ...newPages[currentPageIndex] };
-                              page.hasFeaturedProducts = e.target.checked;
-                              newPages[currentPageIndex] = page;
-                              setDocPages(newPages);
-                            }}
-                            className="w-5 h-5 cursor-pointer"
-                            style={{ accentColor: '#11ff49' }}
-                          />
-                          <span
-                            className="font-['Inter:Medium',sans-serif]"
-                            style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
-                          >
-                            {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
-                          </span>
-                        </label>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
 
@@ -3444,45 +3446,47 @@ export default function ContentDashboardV4({ onBackToLanding, loadedPageId: _loa
                       </>
                     )}
                     {/* Product Carousel Visibility Toggle */}
-                    <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <h3
-                            className="font-['Inter:SemiBold',sans-serif]"
-                            style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
-                          >
-                            Featured Products
-                          </h3>
-                          <p
-                            className="font-['Inter:Regular',sans-serif]"
-                            style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
-                          >
-                            Show product carousel in this article
-                          </p>
+                    {currentPage.styleType === 'cover' && (
+                      <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <h3
+                              className="font-['Inter:SemiBold',sans-serif]"
+                              style={{ fontSize: '16px', fontWeight: '600', color: styles.textPrimary, margin: 0 }}
+                            >
+                              Featured Products
+                            </h3>
+                            <p
+                              className="font-['Inter:Regular',sans-serif]"
+                              style={{ fontSize: '13px', color: '#9e9e9d', marginTop: '4px' }}
+                            >
+                              Show product carousel in this article
+                            </p>
+                          </div>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={currentPage.hasFeaturedProducts !== false}
+                              onChange={(e) => {
+                                const newPages = [...docPages];
+                                const page = { ...newPages[currentPageIndex] };
+                                page.hasFeaturedProducts = e.target.checked;
+                                newPages[currentPageIndex] = page;
+                                setDocPages(newPages);
+                              }}
+                              className="w-5 h-5 cursor-pointer"
+                              style={{ accentColor: '#11ff49' }}
+                            />
+                            <span
+                              className="font-['Inter:Medium',sans-serif]"
+                              style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
+                            >
+                              {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
+                            </span>
+                          </label>
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={currentPage.hasFeaturedProducts !== false}
-                            onChange={(e) => {
-                              const newPages = [...docPages];
-                              const page = { ...newPages[currentPageIndex] };
-                              page.hasFeaturedProducts = e.target.checked;
-                              newPages[currentPageIndex] = page;
-                              setDocPages(newPages);
-                            }}
-                            className="w-5 h-5 cursor-pointer"
-                            style={{ accentColor: '#11ff49' }}
-                          />
-                          <span
-                            className="font-['Inter:Medium',sans-serif]"
-                            style={{ fontSize: '14px', fontWeight: '500', color: styles.textPrimary }}
-                          >
-                            {currentPage.hasFeaturedProducts !== false ? 'On' : 'Off'}
-                          </span>
-                        </label>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
 

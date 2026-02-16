@@ -768,21 +768,46 @@ export function ContentStyle1TextLayer({
                 </>
               )}
               
+              {bodyCopies?.filter((bodyCopy, index) => {
+                const hasHeader = !!paragraphHeaders?.some(header => header.id === bodyCopy.afterHeaderId);
+                return index !== 0 && (!bodyCopy.afterHeaderId || !hasHeader);
+              }).map((bodyCopy) => (
+                <div key={bodyCopy.id}>
+                  {bodyCopy.text && (
+                    <>
+                      <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                      <div style={{ display: 'inline-block', backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: '10px 14px' }}>
+                        <div 
+                          className="mb-0 text-[18px] rich-preview-content"
+                          style={{ lineHeight: '25px' }}
+                          dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                        />
+                      </div>
+                      <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                    </>
+                  )}
+                </div>
+              ))}
+
               {paragraphHeaders?.map((header) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
+                const showHeader = !!header.text;
+                const showBody = !!bodyCopy?.text;
                 return (
                   <div key={header.id}>
-                    {header.text && (
+                    {(showHeader || showBody) && (
                       <>
                         <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                        <div style={{ display: 'inline-block', backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: '6px 10px' }}>
-                          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                        </div>
-                        {bodyCopy?.text && (
+                        {showHeader && (
+                          <div style={{ display: 'inline-block', backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: '6px 10px' }}>
+                            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[19px]">{header.text}</p>
+                          </div>
+                        )}
+                        {showBody && (
                           <>
-                            <div style={{ display: 'inline-block', backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: '10px 14px', marginTop: '4px' }}>
+                            <div style={{ display: 'inline-block', backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: '10px 14px', marginTop: showHeader ? '4px' : undefined }}>
                               <div 
-                                className="mb-0 text-[15px] rich-preview-content"
+                                className="mb-0 text-[18px] rich-preview-content"
                                 style={{ lineHeight: '25px' }}
                                 dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
                               />

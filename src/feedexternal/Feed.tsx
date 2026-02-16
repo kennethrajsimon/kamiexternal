@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { motion } from 'motion/react';
 
 import { useIsMobileOrTablet } from './hooks/useMediaQuery';
 import { Heart, Send, ArrowUp } from 'lucide-react';
@@ -24,6 +25,8 @@ import CoverThumbnailFeatureArticleBw from './imports/CoverThumbnailFeatureArtic
 import CoverThumbnailCreatorSpotlight from './imports/CoverThumbnailCreatorSpotlight';
 import CoverThumbnailAnnouncement1 from './imports/CoverThumbnailAnnouncement1';
 
+import { likePage, sharePage } from '../services/api';
+
 export interface SavedPage {
   id: string;
   name: string;
@@ -34,6 +37,8 @@ export interface SavedPage {
   selectedStyle: string;
   isPublished: boolean;
   savedAt: Date;
+  likes?: number;
+  shares?: number;
   coverImage?: string;
   coverData?: {
     id: string;
@@ -183,7 +188,11 @@ function CoverComposite({ data }: { data: NonNullable<SavedPage['coverData']> })
 function FeedArticlePreview({
   page,
   meta,
-  onCopyLink
+  onCopyLink,
+  likes,
+  shares,
+  onLike,
+  onShare
 }: {
   page: SavedPage;
   meta?: {
@@ -192,8 +201,13 @@ function FeedArticlePreview({
     savedAt: string;
   };
   onCopyLink?: () => void;
+  likes: number;
+  shares: number;
+  onLike: () => void;
+  onShare: () => void;
 }) {
   const copyShareLink = () => {
+    onShare();
     const url = `${window.location.origin}${window.location.pathname}#article-${page.id}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(() => {
@@ -354,8 +368,10 @@ function FeedArticlePreview({
                 author={renderPage.fields.author || ''}
                 headline={renderPage.fields.headline || ''}
                 description={renderPage.fields.description || ''}
-                iconCount1={renderPage.fields.iconCount1 || ''}
-                iconCount2={renderPage.fields.iconCount2 || ''}
+                iconCount1={likes.toString()}
+                iconCount2={shares.toString()}
+                onLike={onLike}
+                onShare={copyShareLink}
                 textPrimary={styles.textPrimary}
                 textAccent={styles.textAccent}
                 fontFamily={styles.fontFamily}
@@ -479,32 +495,83 @@ function FeedArticlePreview({
     );
   };
 
+  const ensureLinkTargets = (html: string) =>
+    html.replace(/<a\b([^>]*?)>/gi, (_match, attrs) => {
+      let next = attrs;
+      if (/target\s*=/i.test(next)) {
+        next = next.replace(/target\s*=\s*(['"])(.*?)\1/i, 'target="_blank"');
+      } else {
+        next = `${next} target="_blank"`;
+      }
+      const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      if (relMatch) {
+        const relParts = relMatch[2].split(/\s+/).filter(Boolean);
+        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        const relValue = relParts.join(' ');
+        next = next.replace(relMatch[0], `rel="${relValue}"`);
+      } else {
+        next = `${next} rel="noopener noreferrer"`;
+      }
+      const styleMatch = next.match(/style\s*=\s*(['"])(.*?)\1/i);
+      const linkStyles = 'color: #11ff49; text-decoration: underline;';
+      if (styleMatch) {
+        const cleaned = styleMatch[2]
+          .replace(/color\s*:\s*[^;]+;?/gi, '')
+          .replace(/text-decoration\s*:\s*[^;]+;?/gi, '')
+          .trim();
+        const merged = `${cleaned}${cleaned && !cleaned.endsWith(';') ? ';' : ''} ${linkStyles}`.trim();
+        next = next.replace(styleMatch[0], `style="${merged}"`);
+      } else {
+        next = `${next} style="${linkStyles}"`;
+      }
+      return `<a${next}>`;
+    });
+
   const renderMobileTextBlocks = (paragraphHeaders?: { id: string; text: string }[], bodyCopies?: { afterHeaderId?: string; text: string }[]) => {
     const standalone = bodyCopies?.filter((b) => !b.afterHeaderId) || [];
     return (
       <div className="flex flex-col gap-[12px]">
         {standalone.map((copy, index) => (
-          <div
+          <motion.div
             key={`standalone-${index}`}
-            className="text-[15px] leading-[24px]"
+            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.5 }}
+            className="text-[15px] leading-[24px] rich-preview-content"
             style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-            dangerouslySetInnerHTML={{ __html: copy.text || '' }}
+            dangerouslySetInnerHTML={{ __html: ensureLinkTargets(copy.text || '') }}
           />
         ))}
-        {paragraphHeaders?.map((header) => {
+        {paragraphHeaders?.map((header, index) => {
           const bodyCopy = bodyCopies?.find((b) => b.afterHeaderId === header.id);
+          const addHeaderSpacing = index > 0 || standalone.length > 0;
           return (
-            <div key={header.id} className="flex flex-col gap-[8px]">
+            <div
+              key={header.id}
+              className={`flex flex-col gap-[8px] ${addHeaderSpacing ? 'mt-[12px]' : ''}`}
+            >
               {header.text && (
-                <div className="text-[16px] font-semibold tracking-wider" style={{ color: styles.textAccent }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                  whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5 }}
+                  className="text-[16px] font-semibold tracking-wider leading-[18px]" style={{ color: styles.textAccent }}
+                >
                   {header.text}
-                </div>
+                </motion.div>
               )}
               {bodyCopy?.text && (
-                <div
-                  className="text-[15px] leading-[24px]"
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                  whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5 }}
+                  className="text-[15px] leading-[24px] rich-preview-content"
                   style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
-                  dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                  dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
                 />
               )}
             </div>
@@ -521,11 +588,24 @@ function FeedArticlePreview({
       return (
         <div className="flex flex-col gap-[14px] relative" style={{ padding: '18px 16px 10px', backgroundColor: styles.background }}>
           {/* Icons positioned to the right */}
-          <div className="absolute right-[16px] top-[18px] flex items-center gap-[16px]">
-            <div className="flex flex-col items-center gap-[4px]">
+          <div className="absolute right-[16px] top-[18px] flex items-center gap-[16px] z-10">
+            <div
+              className="flex flex-col items-center gap-[4px] cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={onLike}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onLike();
+                }
+              }}
+              title="Like article"
+              aria-label="Like article"
+            >
               <Heart size={18} strokeWidth={1.5} color={styles.textPrimary} />
               <div style={{ fontSize: '12px', color: styles.textPrimary }}>
-                {renderPage.fields?.iconCount1 || '112'}
+                {likes}
               </div>
             </div>
             <div
@@ -544,16 +624,28 @@ function FeedArticlePreview({
             >
               <Send size={18} strokeWidth={1.5} color={styles.textPrimary} />
               <div style={{ fontSize: '12px', color: styles.textPrimary }}>
-                {renderPage.fields?.iconCount2 || '24'}
+                {shares}
               </div>
             </div>
           </div>
           {topLabel && (
-            <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false }}
+              transition={{ duration: 0.5 }}
+              className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}
+            >
               {topLabel}
-            </div>
+            </motion.div>
           )}
-          <div className="text-[34px] font-light leading-[40px]" style={{ color: styles.textPrimary }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.5 }}
+            className="text-[34px] font-light leading-[40px]" style={{ color: styles.textPrimary }}
+          >
             <FlipBoardText
               text={renderPage.fields?.title || page.coverData?.title || page.name || 'Untitled'}
               isAnimating={isAnimating}
@@ -563,15 +655,25 @@ function FeedArticlePreview({
               color={styles.textPrimary}
               lineHeight="40px"
             />
-          </div>
+          </motion.div>
           {renderPage.fields?.author && (
-            <div className="text-[12px] font-semibold" style={{ color: styles.textPrimary }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false }}
+              transition={{ duration: 0.5 }}
+              className="text-[12px] font-semibold" style={{ color: styles.textPrimary }}
+            >
               {renderPage.fields.author}
-            </div>
+            </motion.div>
           )}
           {coverImage && (
-            <div
-              className="w-full overflow-hidden"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: false }}
+              transition={{ duration: 0.5 }}
+              className="w-full overflow-hidden mb-[30px]"
               style={{
                 borderRadius: '6px',
                 backgroundColor: '#1a1a1a',
@@ -592,15 +694,25 @@ function FeedArticlePreview({
                   style={{ objectFit: renderPage.imageFits?.coverImageFit || page.coverData?.imageFit || 'cover' }}
                 />
               </EFXWrapper>
-            </div>
+            </motion.div>
           )}
           {renderPage.fields?.headline && (
-            <div className="text-[16px] font-semibold leading-[22px]" style={{ color: styles.textAccent }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false }}
+              transition={{ duration: 0.5 }}
+              className="text-[16px] font-semibold leading-[22px] mb-[30px]" style={{ color: styles.textAccent }}
+            >
               {renderPage.fields.headline}
-            </div>
+            </motion.div>
           )}
           {renderPage.fields?.description && (
-            <div
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false }}
+              transition={{ duration: 0.5 }}
               className="text-[14px] leading-[22px]"
               style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
               dangerouslySetInnerHTML={{ __html: renderPage.fields.description }}
@@ -614,12 +726,12 @@ function FeedArticlePreview({
         return (
           <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
             {renderPage.fields?.topLabel && (
-              <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+              <motion.div initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }} whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} viewport={{ once: false }} transition={{ duration: 0.5 }} className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
                 {renderPage.fields.topLabel}
-              </div>
+              </motion.div>
             )}
             {renderPage.fields?.bodyCopies?.[0]?.text && (
-              <div
+              <motion.div initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }} whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} viewport={{ once: false }} transition={{ duration: 0.5 }}
                 className="text-[22px] font-light leading-[30px]"
                 style={{
                   color: styles.textPrimary,
@@ -631,7 +743,13 @@ function FeedArticlePreview({
             )}
             {renderMobileTextBlocks(renderPage.fields?.paragraphHeaders, renderPage.fields?.bodyCopies?.slice(1))}
             {renderPage.images?.image1 && (
-              <div className="w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -646,10 +764,16 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image1Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
             {renderPage.images?.image2 && (
-              <div className="w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -664,7 +788,7 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image2Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
           </div>
         );
@@ -673,13 +797,19 @@ function FeedArticlePreview({
         return (
           <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
             {renderPage.fields?.topLabel && (
-              <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+              <motion.div initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }} whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} viewport={{ once: false }} transition={{ duration: 0.5 }} className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
                 {renderPage.fields.topLabel}
-              </div>
+              </motion.div>
             )}
             {renderMobileTextBlocks(renderPage.fields?.paragraphHeaders, renderPage.fields?.bodyCopies)}
             {renderPage.images?.image1 && (
-              <div className="w-1/2 mx-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-1/2 mx-auto"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -694,10 +824,16 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image1Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
             {renderPage.images?.image2 && (
-              <div className="w-1/2 mx-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-1/2 mx-auto"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -712,7 +848,7 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image2Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
           </div>
         );
@@ -721,13 +857,19 @@ function FeedArticlePreview({
         return (
           <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
             {renderPage.fields?.topLabel && (
-              <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+              <motion.div initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }} whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} viewport={{ once: false }} transition={{ duration: 0.5 }} className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
                 {renderPage.fields.topLabel}
-              </div>
+              </motion.div>
             )}
             {renderMobileTextBlocks(renderPage.fields?.paragraphHeaders, renderPage.fields?.bodyCopies)}
             {renderPage.images?.image1 && (
-              <div className="w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -742,10 +884,16 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image1Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
             {renderPage.images?.image2 && (
-              <div className="w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -760,7 +908,7 @@ function FeedArticlePreview({
                     style={{ objectFit: renderPage.imageFits?.image2Fit || 'cover' }}
                   />
                 </EFXWrapper>
-              </div>
+              </motion.div>
             )}
           </div>
         );
@@ -769,12 +917,18 @@ function FeedArticlePreview({
         return (
           <div className="flex flex-col gap-[16px]" style={{ padding: '12px 16px 18px', backgroundColor: styles.background }}>
             {renderPage.fields?.topLabel && (
-              <div className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
+              <motion.div initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }} whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} viewport={{ once: false }} transition={{ duration: 0.5 }} className="text-[11px] font-semibold tracking-wider" style={{ color: styles.textGold }}>
                 {renderPage.fields.topLabel}
-              </div>
+              </motion.div>
             )}
             {renderPage.images?.image1 && (
-              <div className="w-full flex flex-col gap-[6px]">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full flex flex-col gap-[6px]"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -790,15 +944,27 @@ function FeedArticlePreview({
                   />
                 </EFXWrapper>
                 {(renderPage.fields?.caption1Title || renderPage.fields?.caption1Subtitle) && (
-                  <div className="text-[12px]" style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                    whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.5 }}
+                    className="text-[12px]" style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
+                  >
                     <div className="font-semibold">{renderPage.fields?.caption1Title}</div>
                     <div className="opacity-80">{renderPage.fields?.caption1Subtitle}</div>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             )}
             {renderPage.images?.image2 && (
-              <div className="w-full flex flex-col gap-[6px]">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
+                className="w-full flex flex-col gap-[6px]"
+              >
                 <EFXWrapper
                   glitchEnabled={!!renderPage.efx?.glitch}
                   blurEnabled={!!renderPage.efx?.blur}
@@ -814,12 +980,18 @@ function FeedArticlePreview({
                   />
                 </EFXWrapper>
                 {(renderPage.fields?.caption2Title || renderPage.fields?.caption2Subtitle) && (
-                  <div className="text-[12px]" style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                    whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 0.5 }}
+                    className="text-[12px]" style={{ color: styles.textPrimary, whiteSpace: 'pre-wrap' }}
+                  >
                     <div className="font-semibold">{renderPage.fields?.caption2Title}</div>
                     <div className="opacity-80">{renderPage.fields?.caption2Subtitle}</div>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
         );
@@ -836,7 +1008,11 @@ function FeedArticlePreview({
         {hasCover && (
           <div className="w-full" style={{ padding: '16px 16px 8px' }}>
             {page.coverData ? (
-              <div
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
                 className="w-full relative overflow-hidden"
                 style={{
                   aspectRatio: '1512 / 851',
@@ -846,9 +1022,13 @@ function FeedArticlePreview({
                 }}
               >
                 <CoverComposite data={page.coverData} />
-              </div>
+              </motion.div>
             ) : page.coverImage ? (
-              <div
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: false }}
+                transition={{ duration: 0.5 }}
                 className="w-full overflow-hidden"
                 style={{
                   borderRadius: '6px',
@@ -862,15 +1042,22 @@ function FeedArticlePreview({
                   className="w-full h-auto block"
                   style={{ objectFit: page.coverData?.imageFit || 'cover' }}
                 />
-              </div>
+              </motion.div>
             ) : null}
           </div>
         )}
         {pages.map((renderPage) => (
-          <div key={`mobile-${renderPage.id}`}>{renderMobilePage(renderPage)}</div>
+          <div
+            key={`mobile-${renderPage.id}`}
+          >
+            {renderMobilePage(renderPage)}
+          </div>
         ))}
         {showProducts && (
-          <div className="w-full" style={{ backgroundColor: styles.background, paddingBottom: '8px' }}>
+          <div
+            className="w-full"
+            style={{ backgroundColor: styles.background, paddingBottom: '8px' }}
+          >
             <ProductCarousel />
           </div>
         )}
@@ -887,30 +1074,6 @@ function FeedArticlePreview({
         padding: '20px'
       }}
     >
-      {meta ? (
-        <div>
-          <div className="flex items-center gap-[12px] mb-[12px]">
-            <span className="text-[11px] font-bold tracking-wider" style={{ color: '#a79755' }}>
-              {meta.category}
-            </span>
-            <span className="text-[11px]" style={{ color: '#9e9e9d' }}>
-              •
-            </span>
-            <span className="text-[11px]" style={{ color: '#9e9e9d' }}>
-              {meta.savedAt}
-            </span>
-          </div>
-          <h3
-            className="font-bold"
-            style={{
-              color: '#f1f0eb',
-              fontSize: '22px'
-            }}
-          >
-            {meta.title}
-          </h3>
-        </div>
-      ) : null}
       <div
         ref={wrapperRef}
         className="w-full"
@@ -936,7 +1099,11 @@ function FeedArticlePreview({
                   transformOrigin: 'top left'
                 }}
               >
-                <div
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.75 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5 }}
                   className="w-full h-full relative"
                   style={{
                     backgroundColor: '#1a1a1a'
@@ -947,10 +1114,17 @@ function FeedArticlePreview({
                   ) : page.coverImage ? (
                     <img src={page.coverImage} alt="" className="w-full h-full object-cover" />
                   ) : null}
-                </div>
+                </motion.div>
               </div>
             </div>
           )}
+          {hasCover && meta ? (
+            <div className="flex items-center gap-[12px]" style={{ marginTop: '12px' }}>
+              <span className="text-[11px] font-bold tracking-wider" style={{ color: '#a79755' }}>
+                {meta.category}
+              </span>
+            </div>
+          ) : null}
           {pages.map((renderPage, index) => (
             <div
               key={renderPage.id}
@@ -972,7 +1146,15 @@ function FeedArticlePreview({
                   transformOrigin: 'top left'
                 }}
               >
-                {renderSequentialPage(renderPage)}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5 }}
+                  className="w-full h-full"
+                >
+                  {renderSequentialPage(renderPage)}
+                </motion.div>
               </div>
             </div>
           ))}
@@ -996,7 +1178,11 @@ function FeedArticlePreview({
                   transformOrigin: 'top left'
                 }}
               >
-                <div
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5 }}
                   className="w-full flex items-start justify-center"
                   style={{
                     backgroundColor: styles.background,
@@ -1005,7 +1191,7 @@ function FeedArticlePreview({
                   }}
                 >
                   <ProductCarousel />
-                </div>
+                </motion.div>
               </div>
             </div>
           )}
@@ -1027,6 +1213,40 @@ export default function FeedPage({
   const publishedPages = savedPages
     .filter(page => page.isPublished)
     .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+
+  const [pageStats, setPageStats] = useState<Record<string, { likes: number; shares: number }>>({});
+
+  useEffect(() => {
+    const stats: Record<string, { likes: number; shares: number }> = {};
+    savedPages.forEach((p) => {
+      stats[p.id] = { likes: p.likes || 0, shares: p.shares || 0 };
+    });
+    setPageStats(stats);
+  }, [savedPages]);
+
+  const handleLike = async (id: string) => {
+    try {
+      setPageStats((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], likes: (prev[id]?.likes || 0) + 1 },
+      }));
+      await likePage(id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShare = async (id: string) => {
+    try {
+      setPageStats((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], shares: (prev[id]?.shares || 0) + 1 },
+      }));
+      await sharePage(id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const [visibleCount, setVisibleCount] = useState(5);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -1169,6 +1389,9 @@ export default function FeedPage({
   }, [publishedPages, visibleCount]);
 
   const copyShareLink = (id: string) => {
+    // Track share count
+    handleShare(id);
+
     const url = `${window.location.origin}${window.location.pathname}#article-${id}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(() => {
@@ -1294,7 +1517,10 @@ export default function FeedPage({
               const category = page.coverData?.category || 'PUBLISHED';
 
               return (
-                <div key={page.id} id={`article-${page.id}`}>
+                <div
+                  key={page.id}
+                  id={`article-${page.id}`}
+                >
                   {index > 0 && (
                     <div
                       style={{
@@ -1312,6 +1538,10 @@ export default function FeedPage({
                       category,
                       savedAt: formatSavedAt(page.savedAt)
                     }}
+                    likes={pageStats[page.id]?.likes || 0}
+                    shares={pageStats[page.id]?.shares || 0}
+                    onLike={() => handleLike(page.id)}
+                    onShare={() => handleShare(page.id)}
                     onCopyLink={() => showToast('Link copied to clipboard')}
                   />
                   <div className="flex justify-center w-full mt-6 mb-2">

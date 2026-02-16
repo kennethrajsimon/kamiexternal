@@ -263,6 +263,26 @@ export function ContentStyle3TextLayer({
   // Simple logic: if there's a topLabel, skip the first body copy entirely if it contains the label
   let skipFirstBodyCopy = false;
   let cleanedFirstBodyCopy = firstBodyCopy;
+  const ensureLinkTargets = (html: string) =>
+    html.replace(/<a\b([^>]*?)>/gi, (_match, attrs) => {
+      let next = attrs;
+      if (/target\s*=/i.test(next)) {
+        next = next.replace(/target\s*=\s*(['"])(.*?)\1/i, 'target="_blank"');
+      } else {
+        next = `${next} target="_blank"`;
+      }
+      const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      if (relMatch) {
+        const relParts = relMatch[2].split(/\s+/).filter(Boolean);
+        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        const relValue = relParts.join(' ');
+        next = next.replace(relMatch[0], `rel="${relValue}"`);
+      } else {
+        next = `${next} rel="noopener noreferrer"`;
+      }
+      return `<a${next}>`;
+    });
   
   if (topLabel && firstBodyCopy) {
     const labelToRemove = topLabel.trim();
@@ -665,7 +685,7 @@ export function ContentStyle3TextLayer({
                       lineHeight: '27px',
                       color: textPrimary
                     }}
-                    dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
+                    dangerouslySetInnerHTML={{ __html: ensureLinkTargets(cleanedFirstBodyCopy) }}
                   />
                 </div>
               </div>
@@ -796,7 +816,7 @@ export function ContentStyle3TextLayer({
                             lineHeight: '21px',
                             color: textPrimary
                           }}
-                          dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                          dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
                         />
                       </div>
                     </div>
@@ -902,12 +922,39 @@ export function ContentStyle3TextLayer({
                   <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '12px 16px' }}>
                     <div 
                       className="leading-[normal] mb-0 text-[24px] font-['Inter:Extra_Light',sans-serif] font-extralight"
-                      dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
+                      dangerouslySetInnerHTML={{ __html: ensureLinkTargets(cleanedFirstBodyCopy) }}
                     />
                   </div>
                   <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
                 </>
               )}
+
+              {bodyCopies?.filter((bodyCopy, index) => {
+                const hasHeader = !!paragraphHeaders?.some(header => header.id === bodyCopy.afterHeaderId);
+                return index !== 0 && (!bodyCopy.afterHeaderId || !hasHeader);
+              }).map((bodyCopy) => (
+                <div key={bodyCopy.id}>
+                  {bodyCopy.text && (
+                    <>
+                      <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                      <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px' }}>
+                        <div 
+                          className="mb-0 text-[15px] rich-preview-content"
+                          style={{
+                            lineHeight: '25px',
+                            opacity: bodyTextOpacity,
+                            transform: `translateY(${bodyTextY}px) scale(${bodyTextScale})`,
+                            filter: `blur(${bodyTextBlur}px)`,
+                            transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
+                          }}
+                          dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
+                        />
+                      </div>
+                      <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                    </>
+                  )}
+                </div>
+              ))}
               
               {paragraphHeaders?.map((header, index) => {
                 const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
@@ -934,11 +981,14 @@ export function ContentStyle3TextLayer({
                   >
                     {(showHeader || showBody) && (
                       <>
-                        <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                        <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                        {showHeader && (
+                          <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                        )}
                         {showHeader && (
                           <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
                             <p 
-                              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]"
+                              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[19px]"
                               style={{
                                 opacity: headerTextOpacity,
                                 transform: `translateY(${headerTextY}px) scale(${headerTextScale})`,
@@ -954,7 +1004,7 @@ export function ContentStyle3TextLayer({
                           <>
                             <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: showHeader ? '4px' : undefined }}>
                           <div 
-                            className="mb-0 text-[15px] rich-preview-content"
+                            className="mb-0 text-[18px] rich-preview-content"
                                 style={{
                                   lineHeight: '25px',
                                   opacity: bodyTextOpacity,
@@ -962,10 +1012,10 @@ export function ContentStyle3TextLayer({
                                   filter: `blur(${bodyTextBlur}px)`,
                                   transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
                                 }}
-                                dangerouslySetInnerHTML={{ __html: bodyCopy.text }}
+                                dangerouslySetInnerHTML={{ __html: ensureLinkTargets(bodyCopy.text) }}
                               />
                             </div>
-                            <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                            <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                           </>
                         )}
                       </>

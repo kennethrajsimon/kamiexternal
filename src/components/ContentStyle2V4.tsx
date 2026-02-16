@@ -54,6 +54,26 @@ function Frame1({ paragraphHeaders, bodyCopies, topLabel }: {
 }) {
   const firstBodyCopy = bodyCopies?.[0]?.text || '';
   const sanitizeInlineStyles = (html: string) => html.replace(/style="[^"]*"/gi, '');
+  const ensureLinkTargets = (html: string) =>
+    html.replace(/<a\b([^>]*?)>/gi, (_match, attrs) => {
+      let next = attrs;
+      if (/target\s*=/i.test(next)) {
+        next = next.replace(/target\s*=\s*(['"])(.*?)\1/i, 'target="_blank"');
+      } else {
+        next = `${next} target="_blank"`;
+      }
+      const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      if (relMatch) {
+        const relParts = relMatch[2].split(/\s+/).filter(Boolean);
+        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        const relValue = relParts.join(' ');
+        next = next.replace(relMatch[0], `rel="${relValue}"`);
+      } else {
+        next = `${next} rel="noopener noreferrer"`;
+      }
+      return `<a${next}>`;
+    });
   
   // Remove topLabel from first body copy if it starts with it (to prevent duplication)
   let cleanedFirstBodyCopy = sanitizeInlineStyles(firstBodyCopy);
@@ -68,37 +88,43 @@ function Frame1({ paragraphHeaders, bodyCopies, topLabel }: {
     }
   }
   
+  const shouldRenderFirstBodyCopy = !!cleanedFirstBodyCopy && !bodyCopies?.[0]?.afterHeaderId;
+  
   return (
     <div className="absolute left-[80px] top-[138px] w-[661px] h-[635px]" style={{ zIndex: 20 }}>
       <div className="font-['Inter',sans-serif] font-normal leading-[normal] text-[#f1f0eb] w-[661px] whitespace-pre-wrap rich-preview-content">
-        {cleanedFirstBodyCopy && (
+        {shouldRenderFirstBodyCopy && (
           <>
             <div 
-              className="leading-[normal] mb-0 text-[15px]"
+              className="leading-[normal] mb-0 text-[18px]"
               style={{ lineHeight: '25px' }}
-              dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
+              dangerouslySetInnerHTML={{ __html: ensureLinkTargets(cleanedFirstBodyCopy) }}
             />
-            <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+            <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
           </>
         )}
         
-        {paragraphHeaders?.map((header, index) => {
+        {paragraphHeaders?.map((header) => {
           const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
           const sanitizedBodyText = sanitizeInlineStyles(bodyCopy?.text || '');
+          const showHeader = !!header.text;
+          const showBody = !!bodyCopy?.text;
           return (
             <div key={header.id}>
-              {header.text && (
+              {(showHeader || showBody) && (
                 <>
-                  <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                  {bodyCopy?.text && (
+                  <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                  {showHeader && (
+                    <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[22px]">{header.text}</h3>
+                  )}
+                  {showBody && (
                     <>
                       <div 
-                        className="mb-0 text-[15px]"
+                        className="mb-0 text-[18px]"
                         style={{ lineHeight: '25px' }}
-                        dangerouslySetInnerHTML={{ __html: sanitizedBodyText }}
+                        dangerouslySetInnerHTML={{ __html: ensureLinkTargets(sanitizedBodyText) }}
                       />
-                      <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                      <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                     </>
                   )}
                 </>

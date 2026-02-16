@@ -68,37 +68,43 @@ function Frame1({ paragraphHeaders, bodyCopies, topLabel }: {
     }
   }
   
+  const shouldRenderFirstBodyCopy = !!cleanedFirstBodyCopy && !bodyCopies?.[0]?.afterHeaderId;
+  
   return (
     <div className="absolute left-[80px] top-[138px] w-[661px] h-[635px]" style={{ zIndex: 20 }}>
       <div className="font-['Inter',sans-serif] font-normal leading-[normal] text-[#f1f0eb] w-[661px] whitespace-pre-wrap rich-preview-content">
-        {cleanedFirstBodyCopy && (
+        {shouldRenderFirstBodyCopy && (
           <>
             <div 
-              className="leading-[normal] mb-0 text-[15px]"
+              className="leading-[normal] mb-0 text-[18px]"
               style={{ lineHeight: '25px' }}
               dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
             />
-            <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+            <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
           </>
         )}
         
-        {paragraphHeaders?.map((header, index) => {
+        {paragraphHeaders?.map((header) => {
           const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
           const sanitizedBodyText = sanitizeInlineStyles(bodyCopy?.text || '');
+          const showHeader = !!header.text;
+          const showBody = !!bodyCopy?.text;
           return (
             <div key={header.id}>
-              {header.text && (
+              {(showHeader || showBody) && (
                 <>
-                  <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                  {bodyCopy?.text && (
+                  <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                  {showHeader && (
+                    <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[22px]">{header.text}</h3>
+                  )}
+                  {showBody && (
                     <>
                       <div 
-                        className="mb-0 text-[15px]"
+                        className="mb-0 text-[18px]"
                         style={{ lineHeight: '25px' }}
                         dangerouslySetInnerHTML={{ __html: sanitizedBodyText }}
                       />
-                      <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                      <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                     </>
                   )}
                 </>
@@ -125,34 +131,30 @@ function Group1({ image, imageFit, efx }: {
   const hasCustomImage = !!image;
   const efxValues = efx || {};
   
-  if (hasCustomImage) {
-    return (
-      <div className="grid-cols-[max-content] grid-rows-[max-content] inline-grid items-[start] justify-items-[start] relative shrink-0">
-        <div className="col-1 h-[250px] ml-0 mt-0 relative row-1 w-[250px] overflow-hidden rounded-[8px]" style={{ zIndex: 5, pointerEvents: 'none' }}>
-          <EFXWrapper
-            glitchEnabled={!!efxValues.glitch}
-            blurEnabled={!!efxValues.blur}
-            chromaticEnabled={!!efxValues.chromatic}
-            shakeEnabled={!!efxValues.shake}
-            distortEnabled={!!efxValues.distort}
-          >
-            <div className="relative w-full h-full">
-              <img 
-                alt="" 
-                className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
-                style={{ objectFit: imageFit || 'cover' }}
-                src={image} 
-              />
-            </div>
-          </EFXWrapper>
-        </div>
-      </div>
-    );
+  if (!hasCustomImage) {
+    return null;
   }
-  
+
   return (
-    <div className="relative w-[250px] h-[250px]">
-      <PlaceholderBox />
+    <div className="grid-cols-[max-content] grid-rows-[max-content] inline-grid items-[start] justify-items-[start] relative shrink-0">
+      <div className="col-1 h-[250px] ml-0 mt-0 relative row-1 w-[250px] overflow-hidden rounded-[8px]" style={{ zIndex: 5, pointerEvents: 'none' }}>
+        <EFXWrapper
+          glitchEnabled={!!efxValues.glitch}
+          blurEnabled={!!efxValues.blur}
+          chromaticEnabled={!!efxValues.chromatic}
+          shakeEnabled={!!efxValues.shake}
+          distortEnabled={!!efxValues.distort}
+        >
+          <div className="relative w-full h-full">
+            <img 
+              alt="" 
+              className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
+              style={{ objectFit: imageFit || 'cover' }}
+              src={image} 
+            />
+          </div>
+        </EFXWrapper>
+      </div>
     </div>
   );
 }
@@ -171,34 +173,30 @@ function Group2({ image, imageFit, efx }: {
   const hasCustomImage = !!image;
   const efxValues = efx || {};
   
-  if (hasCustomImage) {
-    return (
-      <div className="grid-cols-[max-content] grid-rows-[max-content] inline-grid items-[start] justify-items-[start] relative shrink-0">
-        <div className="col-1 h-[250px] ml-0 mt-0 relative row-1 w-[250px] overflow-hidden rounded-[8px]" style={{ zIndex: 5, pointerEvents: 'none' }}>
-          <EFXWrapper
-            glitchEnabled={!!efxValues.glitch}
-            blurEnabled={!!efxValues.blur}
-            chromaticEnabled={!!efxValues.chromatic}
-            shakeEnabled={!!efxValues.shake}
-            distortEnabled={!!efxValues.distort}
-          >
-            <div className="relative w-full h-full">
-              <img 
-                alt="" 
-                className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
-                style={{ objectFit: imageFit || 'cover' }}
-                src={image} 
-              />
-            </div>
-          </EFXWrapper>
-        </div>
-      </div>
-    );
+  if (!hasCustomImage) {
+    return null;
   }
-  
+
   return (
-    <div className="relative w-[250px] h-[250px]">
-      <PlaceholderBox />
+    <div className="grid-cols-[max-content] grid-rows-[max-content] inline-grid items-[start] justify-items-[start] relative shrink-0">
+      <div className="col-1 h-[250px] ml-0 mt-0 relative row-1 w-[250px] overflow-hidden rounded-[8px]" style={{ zIndex: 5, pointerEvents: 'none' }}>
+        <EFXWrapper
+          glitchEnabled={!!efxValues.glitch}
+          blurEnabled={!!efxValues.blur}
+          chromaticEnabled={!!efxValues.chromatic}
+          shakeEnabled={!!efxValues.shake}
+          distortEnabled={!!efxValues.distort}
+        >
+          <div className="relative w-full h-full">
+            <img 
+              alt="" 
+              className="absolute inset-0 max-w-none pointer-events-none size-full rounded-[3px]" 
+              style={{ objectFit: imageFit || 'cover' }}
+              src={image} 
+            />
+          </div>
+        </EFXWrapper>
+      </div>
     </div>
   );
 }
@@ -219,18 +217,22 @@ function Component2ndPageContainer({ image1, image2, image1Fit, image2Fit, efx }
   return (
     <>
       {/* Image 1 - Independent parallax layer */}
-      <AnimatedImageLayer layer={1}>
-        <div className="absolute left-[836px] top-[285.914px] w-[250px] h-[250px]">
-          <Group1 image={image1} imageFit={image1Fit} efx={efx} />
-        </div>
-      </AnimatedImageLayer>
+      {image1 && (
+        <AnimatedImageLayer layer={1}>
+          <div className="absolute left-[836px] top-[285.914px] w-[250px] h-[250px]">
+            <Group1 image={image1} imageFit={image1Fit} efx={efx} />
+          </div>
+        </AnimatedImageLayer>
+      )}
       
       {/* Image 2 - Independent parallax layer */}
-      <AnimatedImageLayer layer={2}>
-        <div className="absolute left-[1116px] top-[285.914px] w-[250px] h-[250px]">
-          <Group2 image={image2} imageFit={image2Fit} efx={efx} />
-        </div>
-      </AnimatedImageLayer>
+      {image2 && (
+        <AnimatedImageLayer layer={2}>
+          <div className="absolute left-[1116px] top-[285.914px] w-[250px] h-[250px]">
+            <Group2 image={image2} imageFit={image2Fit} efx={efx} />
+          </div>
+        </AnimatedImageLayer>
+      )}
     </>
   );
 }

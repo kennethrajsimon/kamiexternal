@@ -57,8 +57,37 @@ export default function ContentStyle3V4({
   
   // Simple logic: if there's a topLabel, skip the first body copy entirely if it contains the label
   let skipFirstBodyCopy = false;
-  // Remove inline styles (e.g., color) so preview inherits theme colors
-  const sanitizeInlineStyles = (html: string) => html.replace(/style="[^"]*"/gi, '');
+  const sanitizeInlineStyles = (html: string) =>
+    html.replace(/style="([^"]*)"/gi, (_match, styles) => {
+      const colorMatch = styles.match(/color\s*:\s*([^;]+)\s*;?/i);
+      const fontSizeMatch = styles.match(/font-size\s*:\s*([^;]+)\s*;?/i);
+      if (!colorMatch && !fontSizeMatch) return '';
+      const kept = [
+        colorMatch ? `color: ${colorMatch[1].trim()};` : '',
+        fontSizeMatch ? `font-size: ${fontSizeMatch[1].trim()};` : ''
+      ].filter(Boolean).join(' ');
+      return `style="${kept}"`;
+    });
+  const ensureLinkTargets = (html: string) =>
+    html.replace(/<a\b([^>]*?)>/gi, (_match, attrs) => {
+      let next = attrs;
+      if (/target\s*=/i.test(next)) {
+        next = next.replace(/target\s*=\s*(['"])(.*?)\1/i, 'target="_blank"');
+      } else {
+        next = `${next} target="_blank"`;
+      }
+      const relMatch = next.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      if (relMatch) {
+        const relParts = relMatch[2].split(/\s+/).filter(Boolean);
+        if (!relParts.some(part => part.toLowerCase() === 'noopener')) relParts.push('noopener');
+        if (!relParts.some(part => part.toLowerCase() === 'noreferrer')) relParts.push('noreferrer');
+        const relValue = relParts.join(' ');
+        next = next.replace(relMatch[0], `rel="${relValue}"`);
+      } else {
+        next = `${next} rel="noopener noreferrer"`;
+      }
+      return `<a${next}>`;
+    });
   let cleanedFirstBodyCopy = sanitizeInlineStyles(firstBodyCopy);
   
   if (topLabel && firstBodyCopy) {
@@ -70,7 +99,7 @@ export default function ContentStyle3V4({
   }
   
   // Only render first body copy if it's not associated with any header
-  const shouldRenderFirstBodyCopy = !!firstBodyCopy;
+  const shouldRenderFirstBodyCopy = !!cleanedFirstBodyCopy && !bodyCopies?.[0]?.afterHeaderId;
   
   return (
     <>
@@ -116,34 +145,41 @@ export default function ContentStyle3V4({
               <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '12px 16px' }}>
                 <div 
                   className="leading-[normal] mb-0 text-[24px] font-['Inter:Extra_Light',sans-serif] font-extralight"
-                  dangerouslySetInnerHTML={{ __html: cleanedFirstBodyCopy }}
+                  dangerouslySetInnerHTML={{ __html: ensureLinkTargets(cleanedFirstBodyCopy) }}
                 />
               </div>
-              <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+              <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
             </>
           )}
           
           {paragraphHeaders?.map((header) => {
             const bodyCopy = bodyCopies?.find(b => b.afterHeaderId === header.id);
             const sanitizedBodyText = sanitizeInlineStyles(bodyCopy?.text || '');
+            const showHeader = !!header.text;
+            const showBody = !!bodyCopy?.text;
             return (
               <div key={header.id}>
-                {header.text && (
+                {(showHeader || showBody) && (
                   <>
-                    <p className="leading-[normal] mb-0 text-[15px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
-                    <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
-                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-[4px] text-[#11ff49] text-[16px]">{header.text}</p>
-                    </div>
-                    {bodyCopy?.text && (
+                    <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                    {showHeader && (
+                      <p className="leading-[normal] mb-0 text-[18px]" style={{ lineHeight: '25px' }}>&nbsp;</p>
+                    )}
+                    {showHeader && (
+                      <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '6px 10px' }}>
+                        <h3 className="text-[22px] leading-[32px] font-semibold text-[#11ff49] mb-[4px] font-['Inter']">{header.text}</h3>
+                      </div>
+                    )}
+                    {showBody && (
                       <>
-                        <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: '4px' }}>
+                        <div style={{ display: 'inline-block', backgroundColor: '#1A1A1A', padding: '10px 14px', marginTop: showHeader ? '4px' : undefined }}>
                           <div 
-                            className="mb-0 text-[15px]"
+                            className="mb-0 text-[18px]"
                             style={{ lineHeight: '25px' }}
-                          dangerouslySetInnerHTML={{ __html: sanitizedBodyText }}
+                          dangerouslySetInnerHTML={{ __html: ensureLinkTargets(sanitizedBodyText) }}
                           />
                         </div>
-                        <p className="leading-[normal] mb-0 text-[15px]">&nbsp;</p>
+                        <p className="leading-[normal] mb-0 text-[18px]">&nbsp;</p>
                       </>
                     )}
                   </>
